@@ -213,6 +213,71 @@
                 <div id="patientDetailsSection" class="mt-4 hidden">
                     <h3 class="text-lg font-semibold mb-2">Patient Details</h3>
                     <div id="patientDetails" class="text-gray-700"></div>
+                    <div class="flex justify-start space-x-4 mt-4">
+                        <button id="editDetailsButton" class="bg-blue-600 text-white font-semibold py-2 px-4 rounded-md hover:bg-blue-700" aria-label="Edit patient details">Edit Details</button>
+                    </div>
+                    <div id="editPatientSection" class="mt-4 hidden">
+                        <h3 class="text-lg font-semibold mb-2">Edit Patient Details</h3>
+                        <form id="editPatientForm" class="space-y-4" novalidate>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label for="editId" class="block text-sm font-medium text-gray-700">Patient ID (Read-only)</label>
+                                    <input type="text" id="editId" readonly class="mt-1 block w-full border border-gray-300 rounded-md p-2 bg-gray-100" aria-label="Patient ID">
+                                </div>
+                                <div>
+                                    <label for="editName" class="block text-sm font-medium text-gray-700">Name</label>
+                                    <input type="text" id="editName" required class="mt-1 block w-full border border-gray-300 rounded-md p-2 focus:ring-green-500 focus:border-green-500" pattern="[A-Za-z\s]+" aria-label="Patient name">
+                                    <p id="editNameError" class="field-error">Letters and spaces only</p>
+                                </div>
+                                <div>
+                                    <label for="editAddress" class="block text-sm font-medium text-gray-700">Address</label>
+                                    <input type="text" id="editAddress" required class="mt-1 block w-full border border-gray-300 rounded-md p-2 focus:ring-green-500 focus:border-green-500" aria-label="Patient address">
+                                    <p id="editAddressError" class="field-error">Address is required</p>
+                                </div>
+                                <div>
+                                    <label for="editAge" class="block text-sm font-medium text-gray-700">Age</label>
+                                    <input type="number" id="editAge" required min="0" max="120" class="mt-1 block w-full border border-gray-300 rounded-md p-2 focus:ring-green-500 focus:border-green-500" aria-label="Patient age">
+                                    <p id="editAgeError" class="field-error">Age must be 0-120</p>
+                                </div>
+                                <div>
+                                    <label for="editPhone" class="block text-sm font-medium text-gray-700">Phone Number</label>
+                                    <input type="tel" id="editPhone" required class="mt-1 block w-full border border-gray-300 rounded-md p-2 focus:ring-green-500 focus:border-green-500" pattern="[\d\s\-\+]+" aria-label="Patient phone number">
+                                    <p id="editPhoneError" class="field-error">Numbers, spaces, +, or - only</p>
+                                </div>
+                                <div>
+                                    <label for="editJoiningDate" class="block text-sm font-medium text-gray-700">Joining Date</label>
+                                    <input type="date" id="editJoiningDate" required class="mt-1 block w-full border border-gray-300 rounded-md p-2 focus:ring-green-500 focus:border-green-500" aria-label="Joining date">
+                                    <p id="editJoiningDateError" class="field-error">Valid date required (not in future)</p>
+                                </div>
+                            </div>
+                            <div>
+                                <label for="editHealthIssues" class="block text-sm font-medium text-gray-700">Health Issues</label>
+                                <textarea id="editHealthIssues" required class="mt-1 block w-full border border-gray-300 rounded-md p-2 focus:ring-green-500 focus:border-green-500" aria-label="Patient health issues"></textarea>
+                                <p id="editHealthIssuesError" class="field-error">Health issues are required</p>
+                            </div>
+                            <div>
+                                <label for="editSurgery" class="block text-sm font-medium text-gray-700">Surgery History</label>
+                                <textarea id="editSurgery" class="mt-1 block w-full border border-gray-300 rounded-md p-2 focus:ring-green-500 focus:border-green-500" aria-label="Patient surgery history"></textarea>
+                            </div>
+                            <div>
+                                <label for="editParalysisStatus" class="block text-sm font-medium text-gray-700">Paralysis Status</label>
+                                <select id="editParalysisStatus" required class="mt-1 block w-full border border-gray-300 rounded-md p-2 focus:ring-green-500 focus:border-green-500" aria-label="Patient paralysis status">
+                                    <option value="None">None</option>
+                                    <option value="Partial">Partial</option>
+                                    <option value="Full">Full</option>
+                                </select>
+                                <p id="editParalysisStatusError" class="field-error">Please select a status</p>
+                            </div>
+                            <div>
+                                <label for="editOtherDetails" class="block text-sm font-medium text-gray-700">Other Details</label>
+                                <textarea id="editOtherDetails" class="mt-1 block w-full border border-gray-300 rounded-md p-2 focus:ring-green-500 focus:border-green-500" aria-label="Other patient details"></textarea>
+                            </div>
+                            <div class="flex justify-end space-x-4">
+                                <button type="submit" class="bg-green-600 text-white font-semibold py-2 px-4 rounded-md hover:bg-green-700" aria-label="Save changes">Save Changes</button>
+                                <button type="button" id="cancelEdit" class="bg-gray-600 text-white font-semibold py-2 px-4 rounded-md hover:bg-gray-700" aria-label="Cancel edit">Cancel</button>
+                            </div>
+                        </form>
+                    </div>
                     <h3 class="text-lg font-semibold mt-4 mb-2">Update Attendance & Status</h3>
                     <form id="attendanceForm" class="space-y-4" novalidate>
                         <div>
@@ -259,7 +324,6 @@
                                 <th>Surgery</th>
                                 <th>Other Details</th>
                                 <th>Joining Date</th>
-                                <th>Bed</th>
                                 <th>Status</th>
                             </tr>
                         </thead>
@@ -316,7 +380,7 @@
 
     <script nonce="ghlk">
         // Replace with your Google Apps Script Web App URL
-        const API_URL = 'YOUR_APPS_SCRIPT_WEB_APP_URL';
+        const API_URL = 'https://script.google.com/macros/s/AKfycbxNZ0lCHVkugQtODfBZTXJKabkv1iMTqkKSgVcb8G-yNWpLupbnFHNYMvTp6NP93vDs/exec';
 
         // Mock credentials (demo only; use server-side auth in production)
         const staffCredentials = [
@@ -338,7 +402,13 @@
             loginButton: document.getElementById('loginButton'),
             loginSection: document.getElementById('loginSection'),
             patientQrSection: document.getElementById('patientQrSection'),
-            patientQrButton: document.getElementById('patientQrButton')
+            patientQrButton: document.getElementById('patientQrButton'),
+            staffDashboard: document.getElementById('staffDashboard'),
+            publicSection: document.getElementById('publicSection'),
+            editDetailsButton: document.getElementById('editDetailsButton'),
+            editPatientSection: document.getElementById('editPatientSection'),
+            editPatientForm: document.getElementById('editPatientForm'),
+            cancelEdit: document.getElementById('cancelEdit')
         };
 
         // XSS sanitization
@@ -350,9 +420,10 @@
         }
 
         // Show toast notification
-        function showToast(message) {
+        function showToast(message, isError = false) {
             const toast = document.createElement('div');
             toast.className = 'toast';
+            toast.style.backgroundColor = isError ? '#F44336' : '#4CAF50';
             toast.textContent = message;
             document.body.appendChild(toast);
             setTimeout(() => toast.remove(), 3000);
@@ -409,31 +480,54 @@
                     link.download = `IDCard_${patient.id}.png`;
                     link.click();
                 });
-            });
+            }, { once: true });
             elements.closeCard.addEventListener('click', () => {
                 elements.idCardSection.classList.add('hidden');
                 elements.registerSection.classList.add('hidden');
                 elements.showRegisterForm.parentElement.classList.remove('hidden');
-            });
+            }, { once: true });
         }
 
         // API Request Helper
         async function apiRequest(action, data) {
             try {
+                console.log('API Request:', { action, data }); // Debug
                 const response = await fetch(API_URL, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ action, ...data })
                 });
-                const result = await response.json();
+                console.log('Response status:', response.status, response.statusText); // Debug
+                const text = await response.text(); // Get raw response
+                console.log('Raw response:', text); // Debug
+                let result;
+                try {
+                    result = JSON.parse(text);
+                } catch (err) {
+                    throw new Error('Invalid JSON response: ' + text);
+                }
                 if (result.status !== 'success') {
                     throw new Error(result.message || 'API request failed');
                 }
                 return result;
             } catch (err) {
-                console.error('API Error:', err);
-                showToast('Error: ' + err.message);
+                console.error('API Error:', err.message, 'Action:', action); // Debug
+                showToast('Error: ' + err.message, true);
                 throw err;
+            }
+        }
+
+        // Check Camera Permissions
+        async function checkCameraPermission() {
+            if (!navigator.permissions || !navigator.permissions.query) {
+                return true; // Fallback for browsers without permissions API
+            }
+            try {
+                const permission = await navigator.permissions.query({ name: 'camera' });
+                return permission.state === 'granted';
+            } catch (err) {
+                console.error('Permission Check Error:', err);
+                return false;
             }
         }
 
@@ -451,7 +545,7 @@
             elements.loginSection.classList.add('hidden');
             elements.staffDashboard.classList.add('hidden');
             elements.publicSection.classList.remove('hidden');
-            stopPatientScanner(); // Ensure scanner is stopped when reopening
+            stopPatientScanner();
         });
 
         // Login Handling
@@ -459,13 +553,35 @@
             e.preventDefault();
             const username = sanitize(document.getElementById('username').value.trim());
             const password = document.getElementById('password').value.trim();
+            console.log('Login attempt:', { username, password }); // Debug
             const isValid = staffCredentials.some(cred => cred.username === username && cred.passwordHash === password);
+            console.log('Is valid:', isValid); // Debug
             if (isValid) {
-                elements.loginSection.classList.add('hidden');
-                elements.patientQrSection.classList.add('hidden');
-                elements.staffDashboard.classList.remove('hidden');
-                elements.publicSection.classList.add('hidden');
-                await Promise.all([loadPatients(), loadAttendance(), loadReviews(), loadChart()]);
+                try {
+                    console.log('Toggling sections'); // Debug
+                    if (!elements.staffDashboard || !elements.publicSection) {
+                        console.error('DOM elements missing:', { staffDashboard: !!elements.staffDashboard, publicSection: !!elements.publicSection });
+                        showToast('UI error: Dashboard elements not found.', true);
+                        return;
+                    }
+                    elements.loginSection.classList.add('hidden');
+                    elements.patientQrSection.classList.add('hidden');
+                    elements.staffDashboard.classList.remove('hidden');
+                    elements.publicSection.classList.add('hidden');
+                    await Promise.all([
+                        loadPatients().catch(err => console.error('loadPatients error:', err)),
+                        loadAttendance().catch(err => console.error('loadAttendance error:', err)),
+                        loadReviews().catch(err => console.error('loadReviews error:', err)),
+                        loadChart().catch(err => console.error('loadChart error:', err))
+                    ]);
+                    console.log('Data loaded successfully'); // Debug
+                    showToast('Logged in successfully!');
+                } catch (err) {
+                    console.error('Login process error:', err);
+                    showToast('Logged in, but failed to load data.', true);
+                    elements.staffDashboard.classList.remove('hidden'); // Ensure dashboard shows
+                    elements.publicSection.classList.add('hidden');
+                }
             } else {
                 document.getElementById('loginError').classList.remove('hidden');
             }
@@ -553,7 +669,6 @@
                 };
                 const result = await apiRequest('addPatient', patient);
                 patient.id = result.id;
-                patient.bedNumber = null;
                 patient.healthStatus = 'Stable';
 
                 await loadPatients();
@@ -562,46 +677,138 @@
                 generateIdCard(patient);
                 initIdCardButtons(patient);
             } catch (err) {
-                alert('An error occurred during registration. Please try again.');
+                showToast('Registration failed: ' + err.message, true);
+            }
+        });
+
+        // Edit Patient Details
+        elements.editDetailsButton.addEventListener('click', function() {
+            elements.editPatientSection.classList.remove('hidden');
+            elements.attendanceForm.classList.add('hidden');
+        });
+
+        elements.cancelEdit.addEventListener('click', function() {
+            elements.editPatientSection.classList.add('hidden');
+            elements.attendanceForm.classList.remove('hidden');
+            clearFormErrors('editPatientForm');
+        });
+
+        elements.editPatientForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            clearFormErrors('editPatientForm');
+
+            try {
+                const id = sanitize(document.getElementById('editId').value.trim());
+                const name = sanitize(document.getElementById('editName').value.trim());
+                const address = sanitize(document.getElementById('editAddress').value.trim());
+                const age = parseInt(document.getElementById('editAge').value);
+                const phone = sanitize(document.getElementById('editPhone').value.trim());
+                const healthIssues = sanitize(document.getElementById('editHealthIssues').value.trim());
+                const surgery = sanitize(document.getElementById('editSurgery').value.trim());
+                const paralysisStatus = document.getElementById('editParalysisStatus').value;
+                const otherDetails = sanitize(document.getElementById('editOtherDetails').value.trim());
+                const joiningDate = document.getElementById('editJoiningDate').value;
+                const healthStatus = document.getElementById('healthStatus').value;
+
+                let valid = true;
+                if (!name.match(/^[A-Za-z\s]+$/)) {
+                    showFormError('editName', 'editNameError');
+                    valid = false;
+                }
+                if (!address) {
+                    showFormError('editAddress', 'editAddressError');
+                    valid = false;
+                }
+                if (isNaN(age) || age < 0 || age > 120) {
+                    showFormError('editAge', 'editAgeError');
+                    valid = false;
+                }
+                if (!phone.match(/^[\d\s\-\+]+$/)) {
+                    showFormError('editPhone', 'editPhoneError');
+                    valid = false;
+                }
+                if (!healthIssues) {
+                    showFormError('editHealthIssues', 'editHealthIssuesError');
+                    valid = false;
+                }
+                if (!paralysisStatus) {
+                    showFormError('editParalysisStatus', 'editParalysisStatusError');
+                    valid = false;
+                }
+                if (!joiningDate || new Date(joiningDate) > new Date()) {
+                    showFormError('editJoiningDate', 'editJoiningDateError');
+                    valid = false;
+                }
+
+                if (!valid) {
+                    alert('Please correct the highlighted fields.');
+                    return;
+                }
+
+                const patient = {
+                    id,
+                    name,
+                    address,
+                    age,
+                    phone,
+                    healthIssues,
+                    surgery,
+                    paralysisStatus,
+                    otherDetails,
+                    joiningDate,
+                    healthStatus
+                };
+                await apiRequest('editPatient', patient);
+                await loadPatients();
+                elements.editPatientSection.classList.add('hidden');
+                elements.attendanceForm.classList.remove('hidden');
+                showToast(`Patient ${id} updated successfully!`);
+                await checkPatientId(id);
+            } catch (err) {
+                showToast('Update failed: ' + err.message, true);
             }
         });
 
         // Staff QR Scanner
         let html5QrCode = null;
-        document.getElementById('startScanner').addEventListener('click', function() {
+        document.getElementById('startScanner').addEventListener('click', async function() {
             if (html5QrCode) return;
             if (!window.location.protocol.includes('https') && window.location.hostname !== 'localhost') {
-                alert('QR scanning requires HTTPS or localhost. Please use a secure context or enter ID manually.');
+                showToast('QR scanning requires HTTPS or localhost.', true);
                 return;
             }
-            html5QrCode = new Html5Qrcode('qrVideo');
-            const qrCodeSuccessCallback = (decodedText) => {
-                let patientId = decodedText.match(/^GHLK\d{4}$/) ? decodedText : decodedText.split('/').pop();
-                if (!patientId.match(/^GHLK\d{4}$/)) {
-                    elements.scannerOutput.innerText = 'Invalid QR code format.';
-                    return;
-                }
-                elements.scannerOutput.innerText = `Successfully scanned: ${patientId}`;
-                stopScanner();
-                document.getElementById('patientId').value = patientId;
-                checkPatientId(patientId);
-            };
-            const qrCodeErrorCallback = () => {
-                elements.scannerOutput.innerText = '';
-            };
-            const config = { fps: 10, qrbox: { width: 250, height: 250 }, aspectRatio: 1 };
-            html5QrCode.start({ facingMode: 'environment' }, config, qrCodeSuccessCallback, qrCodeErrorCallback)
-                .then(() => {
-                    document.getElementById('startScanner').classList.add('hidden');
-                    document.getElementById('stopScanner').classList.remove('hidden');
-                    elements.scannerOutput.innerText = 'Scanning...';
-                })
-                .catch(err => {
-                    console.error('Scanner Start Failed:', err);
-                    alert('Failed to access camera. Please allow camera permissions or enter ID manually.');
-                    html5QrCode = null;
+            const hasPermission = await checkCameraPermission();
+            if (!hasPermission) {
+                showToast('Camera access denied. Please enable camera permissions in browser settings.', true);
+                return;
+            }
+            try {
+                html5QrCode = new Html5Qrcode('qrVideo');
+                const qrCodeSuccessCallback = (decodedText) => {
+                    let patientId = decodedText.match(/^GHLK\d{4}$/) ? decodedText : decodedText.split('/').pop();
+                    if (!patientId.match(/^GHLK\d{4}$/)) {
+                        elements.scannerOutput.innerText = 'Invalid QR code format.';
+                        return;
+                    }
+                    elements.scannerOutput.innerText = `Successfully scanned: ${patientId}`;
+                    stopScanner();
+                    document.getElementById('patientId').value = patientId;
+                    checkPatientId(patientId);
+                };
+                const qrCodeErrorCallback = () => {
                     elements.scannerOutput.innerText = '';
-                });
+                };
+                const config = { fps: 10, qrbox: { width: 250, height: 250 }, aspectRatio: 1 };
+                await html5QrCode.start({ facingMode: 'environment' }, config, qrCodeSuccessCallback, qrCodeErrorCallback);
+                document.getElementById('startScanner').classList.add('hidden');
+                document.getElementById('stopScanner').classList.remove('hidden');
+                elements.scannerOutput.innerText = 'Scanning...';
+            } catch (err) {
+                console.error('Scanner Start Failed:', err);
+                showToast('Failed to access camera. Check permissions.', true);
+                elements.scannerOutput.innerText = '';
+                html5QrCode = null;
+            }
         });
 
         // Stop Staff Scanner
@@ -623,51 +830,59 @@
 
         // Patient QR Scanner
         let patientQrCode = null;
-        document.getElementById('startPatientScanner').addEventListener('click', function() {
+        document.getElementById('startPatientScanner').addEventListener('click', async function() {
             if (patientQrCode) return;
             if (!window.location.protocol.includes('https') && window.location.hostname !== 'localhost') {
-                alert('QR scanning requires HTTPS or localhost. Please use a secure context.');
+                showToast('QR scanning requires HTTPS or localhost.', true);
                 return;
             }
-            patientQrCode = new Html5Qrcode('patientQrVideo');
-            const qrCodeSuccessCallback = async (decodedText) => {
-                let patientId = decodedText.match(/^GHLK\d{4}$/) ? decodedText : decodedText.split('/').pop();
-                if (!patientId.match(/^GHLK\d{4}$/)) {
-                    elements.patientScannerOutput.innerText = 'Invalid QR code format.';
-                    return;
-                }
-                elements.patientScannerOutput.innerText = `Successfully scanned: ${patientId}`;
-                stopPatientScanner();
-                const result = await apiRequest('getPatients');
-                const patient = result.data.find(p => p.id === patientId);
-                document.getElementById('patientInfo').classList.add('hidden');
-                if (patient) {
-                    document.getElementById('patientInfoDetails').innerHTML = `
-                        <p><strong>ID:</strong> ${sanitize(patient.id)}</p>
-                        <p><strong>Name:</strong> ${sanitize(patient.name)}</p>
-                        <p><strong>Joining Date:</strong> ${sanitize(patient.joiningDate)}</p>
-                    `;
-                    document.getElementById('patientInfo').classList.remove('hidden');
-                } else {
-                    elements.patientScannerOutput.innerText = 'No patient found for this ID.';
-                }
-            };
-            const qrCodeErrorCallback = () => {
-                elements.patientScannerOutput.innerText = '';
-            };
-            const config = { fps: 10, qrbox: { width: 250, height: 250 }, aspectRatio: 1 };
-            patientQrCode.start({ facingMode: 'environment' }, config, qrCodeSuccessCallback, qrCodeErrorCallback)
-                .then(() => {
-                    document.getElementById('startPatientScanner').classList.add('hidden');
-                    document.getElementById('stopPatientScanner').classList.remove('hidden');
-                    elements.patientScannerOutput.innerText = 'Scanning...';
-                })
-                .catch(err => {
-                    console.error('Patient Scanner Start Failed:', err);
-                    alert('Failed to access camera. Please allow camera permissions.');
-                    patientQrCode = null;
+            const hasPermission = await checkCameraPermission();
+            if (!hasPermission) {
+                showToast('Camera access denied. Please enable camera permissions in browser settings.', true);
+                return;
+            }
+            try {
+                patientQrCode = new Html5Qrcode('patientQrVideo');
+                const qrCodeSuccessCallback = async (decodedText) => {
+                    let patientId = decodedText.match(/^GHLK\d{4}$/) ? decodedText : decodedText.split('/').pop();
+                    if (!patientId.match(/^GHLK\d{4}$/)) {
+                        elements.patientScannerOutput.innerText = 'Invalid QR code format.';
+                        return;
+                    }
+                    elements.patientScannerOutput.innerText = `Successfully scanned: ${patientId}`;
+                    stopPatientScanner();
+                    try {
+                        const result = await apiRequest('getPatients');
+                        const patient = result.data.find(p => p.id === patientId);
+                        document.getElementById('patientInfo').classList.add('hidden');
+                        if (patient) {
+                            document.getElementById('patientInfoDetails').innerHTML = `
+                                <p><strong>ID:</strong> ${sanitize(patient.id)}</p>
+                                <p><strong>Name:</strong> ${sanitize(patient.name)}</p>
+                                <p><strong>Joining Date:</strong> ${sanitize(patient.joiningDate)}</p>
+                            `;
+                            document.getElementById('patientInfo').classList.remove('hidden');
+                        } else {
+                            elements.patientScannerOutput.innerText = 'No patient found for this ID.';
+                        }
+                    } catch (err) {
+                        showToast('Failed to fetch patient data.', true);
+                    }
+                };
+                const qrCodeErrorCallback = () => {
                     elements.patientScannerOutput.innerText = '';
-                });
+                };
+                const config = { fps: 10, qrbox: { width: 250, height: 250 }, aspectRatio: 1 };
+                await patientQrCode.start({ facingMode: 'environment' }, config, qrCodeSuccessCallback, qrCodeErrorCallback);
+                document.getElementById('startPatientScanner').classList.add('hidden');
+                document.getElementById('stopPatientScanner').classList.remove('hidden');
+                elements.patientScannerOutput.innerText = 'Scanning...';
+            } catch (err) {
+                console.error('Patient Scanner Start Failed:', err);
+                showToast('Failed to access camera. Check permissions.', true);
+                elements.patientScannerOutput.innerText = '';
+                patientQrCode = null;
+            }
         });
 
         // Stop Patient Scanner
@@ -693,7 +908,7 @@
             clearFormErrors('patientId');
             if (!patientId.match(/^GHLK\d{4}$/)) {
                 showFormError('patientId', 'patientIdError');
-                alert('Invalid Patient ID format (e.g., GHLK0001).');
+                showToast('Invalid Patient ID format (e.g., GHLK0001).', true);
                 return;
             }
             await checkPatientId(patientId);
@@ -704,40 +919,56 @@
                 elements.scannerOutput.innerText = 'Invalid Patient ID format.';
                 return;
             }
-            const result = await apiRequest('getPatients');
-            const patient = result.data.find(p => p.id === patientId);
-            document.getElementById('noDetails').classList.add('hidden');
-            document.getElementById('patientDetailsSection').classList.add('hidden');
-            if (patient) {
-                document.getElementById('patientDetails').innerHTML = `
-                    <p><strong>ID:</strong> ${sanitize(patient.id)}</p>
-                    <p><strong>Name:</strong> ${sanitize(patient.name)}</p>
-                    <p><strong>Address:</strong> ${sanitize(patient.address)}</p>
-                    <p><strong>Age:</strong> ${sanitize(patient.age.toString())}</p>
-                    <p><strong>Phone:</strong> ${sanitize(patient.phone)}</p>
-                    <p><strong>Health Issues:</strong> ${sanitize(patient.healthIssues)}</p>
-                    <p><strong>Surgery History:</strong> ${sanitize(patient.surgery)}</p>
-                    <p><strong>Paralysis Status:</strong> ${sanitize(patient.paralysisStatus)}</p>
-                    <p><strong>Other Details:</strong> ${sanitize(patient.otherDetails)}</p>
-                    <p><strong>Joining Date:</strong> ${sanitize(patient.joiningDate)}</p>
-                    <p><strong>Health Status:</strong> ${sanitize(patient.healthStatus)}</p>
-                `;
-                const attendanceResult = await apiRequest('getAttendance');
-                const patientRecords = attendanceResult.data.filter(r => r.patientId === patientId);
-                const tbody = document.querySelector('#patientAttendanceTable tbody');
-                tbody.innerHTML = '';
-                patientRecords.forEach(r => {
-                    const row = `<tr>
-                        <td>${sanitize(r.date)}</td>
-                        <td>${sanitize(r.bedNumber || '-')}</td>
-                        <td>${sanitize(r.healthStatus)}</td>
-                    </tr>`;
-                    tbody.innerHTML += row;
-                });
-                document.getElementById('patientDetailsSection').classList.remove('hidden');
-                document.getElementById('patientId').value = '';
-            } else {
-                document.getElementById('noDetails').classList.remove('hidden');
+            try {
+                const result = await apiRequest('getPatients');
+                const patient = result.data.find(p => p.id === patientId);
+                document.getElementById('noDetails').classList.add('hidden');
+                document.getElementById('patientDetailsSection').classList.add('hidden');
+                elements.editPatientSection.classList.add('hidden');
+                elements.attendanceForm.classList.remove('hidden');
+                if (patient) {
+                    document.getElementById('patientDetails').innerHTML = `
+                        <p><strong>ID:</strong> ${sanitize(patient.id)}</p>
+                        <p><strong>Name:</strong> ${sanitize(patient.name)}</p>
+                        <p><strong>Address:</strong> ${sanitize(patient.address)}</p>
+                        <p><strong>Age:</strong> ${sanitize(patient.age.toString())}</p>
+                        <p><strong>Phone:</strong> ${sanitize(patient.phone)}</p>
+                        <p><strong>Health Issues:</strong> ${sanitize(patient.healthIssues)}</p>
+                        <p><strong>Surgery History:</strong> ${sanitize(patient.surgery)}</p>
+                        <p><strong>Paralysis Status:</strong> ${sanitize(patient.paralysisStatus)}</p>
+                        <p><strong>Other Details:</strong> ${sanitize(patient.otherDetails)}</p>
+                        <p><strong>Joining Date:</strong> ${sanitize(patient.joiningDate)}</p>
+                        <p><strong>Health Status:</strong> ${sanitize(patient.healthStatus)}</p>
+                    `;
+                    document.getElementById('editId').value = patient.id;
+                    document.getElementById('editName').value = patient.name;
+                    document.getElementById('editAddress').value = patient.address;
+                    document.getElementById('editAge').value = patient.age;
+                    document.getElementById('editPhone').value = patient.phone;
+                    document.getElementById('editHealthIssues').value = patient.healthIssues;
+                    document.getElementById('editSurgery').value = patient.surgery;
+                    document.getElementById('editParalysisStatus').value = patient.paralysisStatus;
+                    document.getElementById('editOtherDetails').value = patient.otherDetails;
+                    document.getElementById('editJoiningDate').value = patient.joiningDate.split('/').reverse().join('-');
+                    const attendanceResult = await apiRequest('getAttendance');
+                    const patientRecords = attendanceResult.data.filter(r => r.patientId === patientId);
+                    const tbody = document.querySelector('#patientAttendanceTable tbody');
+                    tbody.innerHTML = '';
+                    patientRecords.forEach(r => {
+                        const row = `<tr>
+                            <td>${sanitize(r.date)}</td>
+                            <td>${sanitize(r.bedNumber || '-')}</td>
+                            <td>${sanitize(r.healthStatus)}</td>
+                        </tr>`;
+                        tbody.innerHTML += row;
+                    });
+                    document.getElementById('patientDetailsSection').classList.remove('hidden');
+                    document.getElementById('patientId').value = '';
+                } else {
+                    document.getElementById('noDetails').classList.remove('hidden');
+                }
+            } catch (err) {
+                showToast('Failed to fetch patient data.', true);
             }
         }
 
@@ -746,7 +977,7 @@
             e.preventDefault();
             const patientId = sanitize(document.getElementById('patientId').value.trim());
             if (!patientId.match(/^GHLK\d{4}$/)) {
-                alert('Invalid Patient ID format (e.g., GHLK0001).');
+                showToast('Invalid Patient ID format (e.g., GHLK0001).', true);
                 return;
             }
             const bedNumber = document.getElementById('bedNumber').value || null;
@@ -756,8 +987,9 @@
                 await Promise.all([loadPatients(), loadAttendance(), loadChart()]);
                 await checkPatientId(patientId);
                 this.reset();
+                showToast('Attendance marked successfully!');
             } catch (err) {
-                alert('Invalid Patient ID or API error.');
+                showToast('Failed to mark attendance: ' + err.message, true);
             }
         });
 
@@ -777,15 +1009,16 @@
                 valid = false;
             }
             if (!valid) {
-                alert('Please correct the highlighted fields.');
+                showToast('Please correct the highlighted fields.', true);
                 return;
             }
             try {
                 await apiRequest('addReview', { name, text });
                 await loadReviews();
                 this.reset();
+                showToast('Review submitted successfully!');
             } catch (err) {
-                alert('An error occurred while submitting the review.');
+                showToast('Failed to submit review: ' + err.message, true);
             }
         });
 
@@ -832,12 +1065,12 @@
                         showToast('Data imported successfully!');
                     } catch (err) {
                         console.error('JSON Parse Error:', err);
-                        alert('Invalid JSON file or import error.');
+                        showToast('Invalid JSON file or import error.', true);
                     }
                 };
                 reader.readAsText(file);
             } else {
-                alert('Please upload a valid JSON file.');
+                showToast('Please upload a valid JSON file.', true);
             }
         });
 
@@ -864,7 +1097,7 @@
                 window.URL.revokeObjectURL(url);
                 showToast('Data exported successfully!');
             } catch (err) {
-                alert('Error exporting data.');
+                showToast('Error exporting data: ' + err.message, true);
             }
         });
 
@@ -873,31 +1106,34 @@
         async function loadPatients() {
             const tbody = document.querySelector('#patientTable tbody');
             if (!tbody) return;
-            const result = await apiRequest('getPatients');
-            const sortedPatients = [...result.data].sort((a, b) => {
-                const valA = a[sortConfig.key];
-                const valB = b[sortConfig.key];
-                const modifier = sortConfig.direction === 'asc' ? 1 : -1;
-                return typeof valA === 'string' ? valA.localeCompare(valB) * modifier : (valA - valB) * modifier;
-            });
-            tbody.innerHTML = '';
-            sortedPatients.forEach(p => {
-                const row = `<tr>
-                    <td>${sanitize(p.id)}</td>
-                    <td>${sanitize(p.name)}</td>
-                    <td>${sanitize(p.address)}</td>
-                    <td>${sanitize(p.age.toString())}</td>
-                    <td>${sanitize(p.phone)}</td>
-                    <td>${sanitize(p.healthIssues)}</td>
-                    <td>${sanitize(p.paralysisStatus)}</td>
-                    <td>${sanitize(p.surgery)}</td>
-                    <td>${sanitize(p.otherDetails)}</td>
-                    <td>${sanitize(p.joiningDate)}</td>
-                    <td>${sanitize(p.bedNumber || '-')}</td>
-                    <td>${sanitize(p.healthStatus)}</td>
-                </tr>`;
-                tbody.innerHTML += row;
-            });
+            try {
+                const result = await apiRequest('getPatients');
+                const sortedPatients = [...result.data].sort((a, b) => {
+                    const valA = a[sortConfig.key];
+                    const valB = b[sortConfig.key];
+                    const modifier = sortConfig.direction === 'asc' ? 1 : -1;
+                    return typeof valA === 'string' ? valA.localeCompare(valB) * modifier : (valA - valB) * modifier;
+                });
+                tbody.innerHTML = '';
+                sortedPatients.forEach(p => {
+                    const row = `<tr>
+                        <td>${sanitize(p.id)}</td>
+                        <td>${sanitize(p.name)}</td>
+                        <td>${sanitize(p.address)}</td>
+                        <td>${sanitize(p.age.toString())}</td>
+                        <td>${sanitize(p.phone)}</td>
+                        <td>${sanitize(p.healthIssues)}</td>
+                        <td>${sanitize(p.paralysisStatus)}</td>
+                        <td>${sanitize(p.surgery)}</td>
+                        <td>${sanitize(p.otherDetails)}</td>
+                        <td>${sanitize(p.joiningDate)}</td>
+                        <td>${sanitize(p.healthStatus)}</td>
+                    </tr>`;
+                    tbody.innerHTML += row;
+                });
+            } catch (err) {
+                showToast('Failed to load patients.', true);
+            }
         }
 
         // Table Sorting
@@ -918,34 +1154,43 @@
         async function loadAttendance() {
             const tbody = document.querySelector('#attendanceTable tbody');
             if (!tbody) return;
-            const result = await apiRequest('getAttendance');
-            result.data.sort((a, b) => new Date(b.date) - new Date(a.date));
-            tbody.innerHTML = '';
-            result.data.forEach(r => {
-                const row = `<tr>
-                    <td>${sanitize(r.date)}</td>
-                    <td>${sanitize(r.patientId)}</td>
-                    <td>${sanitize(r.name)}</td>
-                    <td>${sanitize(r.bedNumber || '-')}</td>
-                    <td>${sanitize(r.healthStatus)}</td>
-                </tr>`;
-                tbody.innerHTML += row;
-            });
+            try {
+                const result = await apiRequest('getAttendance');
+                result.data.sort((a, b) => new Date(b.date) - new Date(a.date));
+                tbody.innerHTML = '';
+                result.data.forEach(r => {
+                    const row = `<tr>
+                        <td>${sanitize(r.date)}</td>
+                        <td>${sanitize(r.patientId)}</td>
+                        <td>${sanitize(r.name)}</td>
+                        <td>${sanitize(r.bedNumber || '-')}</td>
+                        <td>${sanitize(r.healthStatus)}</td>
+                    </tr>`;
+                    tbody.innerHTML += row;
+                });
+            } catch (err) {
+                showToast('Failed to load attendance.', true);
+            }
         }
 
         // Load Reviews
         async function loadReviews() {
             const reviewList = document.getElementById('reviewList');
             if (!reviewList) return;
-            const result = await apiRequest('getReviews');
-            reviewList.innerHTML = '';
-            result.data.forEach(r => {
-                const div = `<div class="border-b py-2">
-                    <p class="font-semibold">${sanitize(r.name)} - ${sanitize(r.date)}</p>
-                    <p class="text-gray-700">${sanitize(r.text)}</p>
-                </div>`;
-                reviewList.innerHTML += div;
-            });
+            try {
+                const result = await apiRequest('getReviews');
+                reviewList.innerHTML = '';
+                result.data.forEach(r => {
+                    const div = `<div class="border-b py-2">
+                        <p class="font-semibold">${sanitize(r.name)} - ${sanitize(r.date)}</p>
+                        <p class="text-gray-700">${sanitize(r.text)}</p>
+                    </div>`;
+                    reviewList.innerHTML += div;
+                });
+            } catch (err) {
+                console.error('loadReviews error:', err);
+                showToast('Failed to load reviews.', true);
+            }
         }
 
         // Load Health Status Chart
@@ -971,11 +1216,20 @@
                 });
             } catch (err) {
                 console.error('Chart Error:', err);
+                showToast('Failed to load chart.', true);
             }
         }
 
         // Initialize
-        loadReviews();
+        async function initialize() {
+            try {
+                await loadReviews();
+            } catch (err) {
+                console.error('Initial loadReviews failed:', err);
+                showToast('Failed to load reviews on startup.', true);
+            }
+        }
+        initialize();
     </script>
 </body>
 </html>
