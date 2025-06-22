@@ -369,7 +369,7 @@
 
     <script nonce="ghlk">
         // Google Apps Script Web App URL
-        const API_URL = 'https://script.google.com/macros/s/AKfycby-LtEL5eiysUYCWSLbepqxet03imcHlLT7LMeddyqzpVgY7J0Wo8koHCqka1QGRSvROw/exec';
+        const API_URL = 'https://script.google.com/macros/s/AKfycbzoH9Sa4EBrva--Qm2jC4PEGVZxkeEUQYVROIqfc6NVMOtLzVCvuKOWe9ub4iMDcVKFRw/exec';
 
         // Mock credentials (demo only; use server-side auth in production)
         const staffCredentials = [
@@ -517,22 +517,6 @@
                 console.error('API Error:', err.message, 'Action:', action);
                 showToast('Error: ' + err.message, true);
                 throw err;
-            }
-        }
-
-        // Check Camera Permissions
-        async function checkCameraPermission() {
-            if (!navigator.permissions || !navigator.permissions.query) {
-                console.log('Permissions API not supported, assuming camera access granted');
-                return true;
-            }
-            try {
-                const permission = await navigator.permissions.query({ name: 'camera' });
-                console.log('Camera permission state:', permission.state);
-                return permission.state === 'granted';
-            } catch (err) {
-                console.error('Permission Check Error:', err);
-                return false;
             }
         }
 
