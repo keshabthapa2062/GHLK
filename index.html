@@ -1,0 +1,829 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="
+        default-src 'self';
+        script-src 'self' https://cdn.tailwindcss.com https://cdn.jsdelivr.net https://unpkg.com https://cdnjs.cloudflare.com 'nonce-ghlk';
+        style-src 'self' https://fonts.googleapis.com 'unsafe-inline';
+        font-src https://fonts.gstatic.com;
+        img-src 'self' data:;
+        media-src 'self';
+        connect-src 'self';
+        frame-src 'none';
+        object-src 'none';
+        base-uri 'self';
+        form-action 'self';
+    ">
+    <title>GHLK Patient Management System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+    <script src="https://unpkg.com/html5-qrcode@2.3.9/minified/html5-qrcode.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Poppins', sans-serif; background-color: #f3f4f6; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 1rem; }
+        table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
+        th, td { border: 1px solid #d1d5db; padding: 0.5rem; text-align: left; }
+        th { background-color: #e5e7eb; cursor: pointer; }
+        th:hover { background-color: #d1d5db; }
+        canvas { max-width: 100%; height: auto; }
+        .hidden { display: none; }
+        #qrVideo { width: 100%; max-width: 300px; margin: 1rem auto; }
+        #scannerOutput { margin-top: 10px; font-weight: bold; text-align: center; color: #4CAF50; }
+        .error { color: #F44336; }
+        input:invalid:focus, select:invalid:focus, textarea:invalid:focus { border-color: #F44336; }
+        button:hover { transition: background-color 0.2s ease; }
+        .field-error { display: none; color: #F44336; font-size: 0.875rem; margin-top: 0.25rem; }
+        .table-responsive { overflow-x: auto; }
+        .toast { position: fixed; bottom: 20px; right: 20px; background-color: #4CAF50; color: white; padding: 1rem; border-radius: 0.5rem; z-index: 1000; }
+        #idCard { width: 350px; height: 220px; background: #ffffff; padding: 20px; border: 2px solid #333; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); margin: 20px auto; }
+        .company-info { text-align: center; margin-bottom: 10px; }
+        .company-info h2 { margin: 0; font-size: 18px; }
+        .company-info p { margin: 0; font-size: 12px; color: #555; }
+        .info-section { display: flex; justify-content: space-between; }
+        .details { font-size: 14px; line-height: 1.6; }
+        .details div { display: flex; }
+        .details b { width: 100px; }
+        .qr-section { margin-left: 10px; }
+        .qr-section canvas { width: 80px; height: 80px; }
+    </style>
+</head>
+<body>
+    <div class="container mx-auto px-4 py-8">
+        <h1 class="text-3xl font-bold text-center text-green-600 mb-6">GHLK Patient Management System</h1>
+
+        <div id="loginSection" class="bg-white p-6 rounded-lg shadow-md mb-8">
+            <h2 class="text-xl font-semibold mb-4 text-gray-800">Staff Login</h2>
+            <form id="loginForm" class="space-y-4">
+                <div>
+                    <label for="username" class="block text-sm font-medium text-gray-700">Username</label>
+                    <input type="text" id="username" required class="mt-1 block w-full border border-gray-300 rounded-md p-2 focus:ring-green-500 focus:border-green-500" aria-label="Username">
+                </div>
+                <div>
+                    <label for="password" class="block text-sm font-medium text-gray-700">Password</label>
+                    <input type="password" id="password" required class="mt-1 block w-full border border-gray-300 rounded-md p-2 focus:ring-green-500 focus:border-green-500" aria-label="Password">
+                </div>
+                <button type="submit" class="w-full bg-green-600 text-white font-semibold py-2 px-4 rounded-md hover:bg-green-700" aria-label="Login">Login</button>
+            </form>
+            <p id="loginError" class="text-red-500 mt-2 hidden">Invalid username or password</p>
+        </div>
+
+        <div id="staffDashboard" class="hidden">
+            <div class="flex justify-end mb-4">
+                <button id="logoutButton" class="bg-red-600 text-white font-semibold py-2 px-4 rounded-md hover:bg-red-700" aria-label="Logout">Logout</button>
+            </div>
+
+            <div class="bg-white p-6 rounded-lg shadow-md mb-8">
+                <h2 class="text-xl font-semibold mb-4 text-gray-800">Data Management</h2>
+                <div class="flex flex-col space-y-4">
+                    <div>
+                        <label for="dataUpload" class="block text-sm font-medium text-gray-700">Upload Data (ghlk_data.json)</label>
+                        <input type="file" id="dataUpload" accept=".json" class="mt-1 block w-full border border-gray-300 rounded-md p-2" aria-label="Upload JSON data">
+                    </div>
+                    <button id="saveData" class="w-full bg-blue-600 text-white font-semibold py-2 px-4 rounded-md hover:bg-blue-700" aria-label="Download data">Download Data as ghlk_data.json</button>
+                </div>
+            </div>
+
+            <div class="bg-white p-6 rounded-lg shadow-md mb-8">
+                <button id="showRegisterForm" class="w-full bg-green-600 text-white font-semibold py-2 px-4 rounded-md hover:bg-green-700" aria-label="Register new patient">Register New Patient</button>
+            </div>
+
+            <div id="registerSection" class="bg-white p-6 rounded-lg shadow-md mb-8 hidden">
+                <h2 class="text-xl font-semibold mb-4 text-gray-800">Register New Patient</h2>
+                <form id="patientForm" class="space-y-4" novalidate>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label for="name" class="block text-sm font-medium text-gray-700">Name</label>
+                            <input type="text" id="name" required class="mt-1 block w-full border border-gray-300 rounded-md p-2 focus:ring-green-500 focus:border-green-500" pattern="[A-Za-z\s]+" aria-label="Patient name">
+                            <p id="nameError" class="field-error">Letters and spaces only</p>
+                        </div>
+                        <div>
+                            <label for="address" class="block text-sm font-medium text-gray-700">Address</label>
+                            <input type="text" id="address" required class="mt-1 block w-full border border-gray-300 rounded-md p-2 focus:ring-green-500 focus:border-green-500" aria-label="Patient address">
+                            <p id="addressError" class="field-error">Address is required</p>
+                        </div>
+                        <div>
+                            <label for="age" class="block text-sm font-medium text-gray-700">Age</label>
+                            <input type="number" id="age" required min="0" max="120" class="mt-1 block w-full border border-gray-300 rounded-md p-2 focus:ring-green-500 focus:border-green-500" aria-label="Patient age">
+                            <p id="ageError" class="field-error">Age must be 0-120</p>
+                        </div>
+                        <div>
+                            <label for="phone" class="block text-sm font-medium text-gray-700">Phone Number</label>
+                            <input type="tel" id="phone" required class="mt-1 block w-full border border-gray-300 rounded-md p-2 focus:ring-green-500 focus:border-green-500" pattern="[\d\s\-\+]+" aria-label="Patient phone number">
+                            <p id="phoneError" class="field-error">Numbers, spaces, +, or - only</p>
+                        </div>
+                    </div>
+                    <div>
+                        <label for="healthIssues" class="block text-sm font-medium text-gray-700">Health Issues</label>
+                        <textarea id="healthIssues" required class="mt-1 block w-full border border-gray-300 rounded-md p-2 focus:ring-green-500 focus:border-green-500" aria-label="Patient health issues"></textarea>
+                        <p id="healthIssuesError" class="field-error">Health issues are required</p>
+                    </div>
+                    <div>
+                        <label for="surgery" class="block text-sm font-medium text-gray-700">Surgery History</label>
+                        <textarea id="surgery" class="mt-1 block w-full border border-gray-300 rounded-md p-2 focus:ring-green-500 focus:border-green-500" aria-label="Patient surgery history"></textarea>
+                    </div>
+                    <div>
+                        <label for="paralysisStatus" class="block text-sm font-medium text-gray-700">Paralysis Status</label>
+                        <select id="paralysisStatus" required class="mt-1 block w-full border border-gray-300 rounded-md p-2 focus:ring-green-500 focus:border-green-500" aria-label="Patient paralysis status">
+                            <option value="None">None</option>
+                            <option value="Partial">Partial</option>
+                            <option value="Full">Full</option>
+                        </select>
+                        <p id="paralysisStatusError" class="field-error">Please select a status</p>
+                    </div>
+                    <div>
+                        <label for="otherDetails" class="block text-sm font-medium text-gray-700">Other Details</label>
+                        <textarea id="otherDetails" class="mt-1 block w-full border border-gray-300 rounded-md p-2 focus:ring-green-500 focus:border-green-500" aria-label="Other patient details"></textarea>
+                    </div>
+                    <button type="submit" class="w-full bg-green-600 text-white font-semibold py-2 px-4 rounded-md hover:bg-green-700" aria-label="Register patient">Register Patient</button>
+                </form>
+                <div id="idCardSection" class="hidden mt-4">
+                    <h3 class="text-lg font-semibold mb-2">Patient ID Card</h3>
+                    <div id="idCard" class="mx-auto"></div>
+                    <div class="flex justify-center space-x-4 mt-4">
+                        <button id="downloadCard" class="bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700" aria-label="Download ID card">Download ID Card</button>
+                        <button id="closeCard" class="bg-gray-600 text-white py-2 px-4 rounded-md hover:bg-gray-700" aria-label="Close ID card">Close</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white p-6 rounded-lg shadow-md mb-8">
+                <h2 class="text-xl font-semibold mb-4 text-gray-800">Attendance & Bed Management</h2>
+                <div id="qrScannerSection">
+                    <p class="text-gray-700 mb-2">Scan QR Code or Enter Patient ID</p>
+                    <div id="qrVideo" class="mx-auto"></div>
+                    <div id="scannerOutput"></div>
+                    <div class="flex justify-center space-x-4 mb-4">
+                        <button id="startScanner" class="bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700" aria-label="Start QR scanner">Start QR Scanner</button>
+                        <button id="stopScanner" class="bg-red-600 text-white py-2 px-4 rounded-md hover:bg-red-700 hidden" aria-label="Stop QR scanner">Stop QR Scanner</button>
+                    </div>
+                    <div>
+                        <label for="patientId" class="block text-sm font-medium text-gray-700">Patient ID</label>
+                        <input type="text" id="patientId" class="mt-1 block w-full border border-gray-300 rounded-md p-2 focus:ring-green-500 focus:border-green-500" pattern="GHLK\d{4}" aria-label="Patient ID">
+                        <p id="patientIdError" class="field-error">Format: GHLK followed by 4 digits</p>
+                    </div>
+                    <button id="checkId" class="w-full bg-green-600 text-white font-semibold py-2 px-4 rounded-md hover:bg-green-700 mt-4" aria-label="Check patient ID">Check ID</button>
+                    <p id="noDetails" class="text-red-500 mt-2 hidden">No patient found for this ID</p>
+                </div>
+                <div id="patientDetailsSection" class="mt-4 hidden">
+                    <h3 class="text-lg font-semibold mb-2">Patient Details</h3>
+                    <div id="patientDetails" class="text-gray-700"></div>
+                    <h3 class="text-lg font-semibold mt-4 mb-2">Update Attendance & Status</h3>
+                    <form id="attendanceForm" class="space-y-4" novalidate>
+                        <div>
+                            <label for="bedNumber" class="block text-sm font-medium text-gray-700">Bed Number</label>
+                            <input type="number" id="bedNumber" min="0" class="mt-1 block w-full border border-gray-300 rounded-md p-2 focus:ring-green-500 focus:border-green-500" aria-label="Bed number">
+                        </div>
+                        <div>
+                            <label for="healthStatus" class="block text-sm font-medium text-gray-700">Health Status</label>
+                            <select id="healthStatus" class="mt-1 block w-full border border-gray-300 rounded-md p-2 focus:ring-green-500 focus:border-green-500" aria-label="Health status">
+                                <option value="Stable">Stable</option>
+                                <option value="Improving">Improving</option>
+                                <option value="Critical">Critical</option>
+                            </select>
+                        </div>
+                        <button type="submit" class="w-full bg-green-600 text-white font-semibold py-2 px-4 rounded-md hover:bg-green-700" aria-label="Mark attendance">Mark Attendance</button>
+                    </form>
+                    <h3 class="text-lg font-semibold mt-4 mb-2">Past Attendance Records</h3>
+                    <table id="patientAttendanceTable">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Bed</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="bg-white p-6 rounded-lg shadow-md mb-8">
+                <h2 class="text-xl font-semibold mb-4 text-gray-800">Patient List</h2>
+                <div class="table-responsive">
+                    <table id="patientTable">
+                        <thead>
+                            <tr>
+                                <th data-sort="id">ID</th>
+                                <th data-sort="name">Name</th>
+                                <th>Address</th>
+                                <th>Age</th>
+                                <th>Phone</th>
+                                <th>Health Issues</th>
+                                <th>Paralysis Status</th>
+                                <th>Surgery</th>
+                                <th>Other Details</th>
+                                <th>Bed</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="bg-white p-6 rounded-lg shadow-md mb-8">
+                <h2 class="text-xl font-semibold mb-4 text-gray-800">Attendance Records</h2>
+                <div class="table-responsive">
+                    <table id="attendanceTable">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Patient ID</th>
+                                <th>Name</th>
+                                <th>Bed</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="bg-white p-6 rounded-lg shadow-md">
+                <h2 class="text-xl font-semibold mb-4 text-gray-800">Health Status Trends</h2>
+                <canvas id="statusChart"></canvas>
+            </div>
+        </div>
+
+        <div id="publicSection" class="bg-white p-6 rounded-lg shadow-md mb-8">
+            <h2 class="text-xl font-semibold mb-4 text-gray-800">About GHLK</h2>
+            <p class="text-gray-700 mb-4">Green and Happy Life Korea (GHLK) provides thermal therapy and fitness programs to improve health and mobility in Rampur, Palpa, Nepal.</p>
+            <h2 class="text-xl font-semibold mb-4 text-gray-800">Submit a Review</h2>
+            <form id="reviewForm" class="space-y-4" novalidate>
+                <div>
+                    <label for="reviewName" class="block text-sm font-medium text-gray-700">Your Name</label>
+                    <input type="text" id="reviewName" required class="mt-1 block w-full border border-gray-300 rounded-md p-2 focus:ring-green-500 focus:border-green-500" pattern="[A-Za-z\s]+" aria-label="Reviewer name">
+                    <p id="reviewNameError" class="field-error">Letters and spaces only</p>
+                </div>
+                <div>
+                    <label for="reviewText" class="block text-sm font-medium text-gray-700">Review</label>
+                    <textarea id="reviewText" required class="mt-1 block w-full border border-gray-300 rounded-md p-2 focus:ring-green-500 focus:border-green-500" aria-label="Review text"></textarea>
+                    <p id="reviewTextError" class="field-error">Review text is required</p>
+                </div>
+                <button type="submit" class="w-full bg-green-600 text-white font-semibold py-2 px-4 rounded-md hover:bg-green-700" aria-label="Submit review">Submit Review</button>
+            </form>
+            <h2 class="text-xl font-semibold mt-6 mb-4 text-gray-800">Reviews</h2>
+            <div id="reviewList" class="space-y-4"></div>
+        </div>
+    </div>
+
+    <script nonce="ghlk">
+        // Mock credentials (demo only; use server-side auth in production)
+        const staffCredentials = [
+            { username: 'staff1', passwordHash: 'ghlk123' },
+            { username: 'admin', passwordHash: 'ghlkadmin' }
+        ];
+
+        // Initialize data
+        let patients = [];
+        let attendanceRecords = [];
+        let reviews = [];
+        let lastPatientId = 0;
+        let html5QrCode = null;
+        let sortConfig = { key: 'id', direction: 'asc' };
+
+        // DOM elements
+        const elements = {
+            patientForm: document.getElementById('patientForm'),
+            registerSection: document.getElementById('registerSection'),
+            showRegisterForm: document.getElementById('showRegisterForm'),
+            scannerOutput: document.getElementById('scannerOutput'),
+            idCardSection: document.getElementById('idCardSection'),
+            idCard: document.getElementById('idCard'),
+            downloadCard: document.getElementById('downloadCard'),
+            closeCard: document.getElementById('closeCard')
+        };
+
+        // XSS sanitization
+        function sanitize(input) {
+            if (typeof input !== 'string') return input;
+            const div = document.createElement('div');
+            div.textContent = input;
+            return div.innerHTML;
+        }
+
+        // Show toast notification
+        function showToast(message) {
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        }
+
+        // Clear form errors
+        function clearFormErrors(formId) {
+            const form = document.getElementById(formId);
+            form.querySelectorAll('.field-error').forEach(error => error.style.display = 'none');
+            form.querySelectorAll('input, select, textarea').forEach(input => input.classList.remove('border-red-500'));
+        }
+
+        // Show form error
+        function showFormError(inputId, errorId) {
+            document.getElementById(errorId).style.display = 'block';
+            document.getElementById(inputId).classList.add('border-red-500');
+        }
+
+        // Generate ID Card
+        function generateIdCard(patient) {
+            elements.idCard.innerHTML = `
+                <div class="company-info">
+                    <h2>GHLK Health Care Center</h2>
+                    <p>Rampur, Palpa, Nepal</p>
+                </div>
+                <div class="info-section">
+                    <div class="details">
+                        <div><b>Patient ID:</b> ${sanitize(patient.id)}</div>
+                        <div><b>Name:</b> ${sanitize(patient.name)}</div>
+                        <div><b>Age:</b> ${sanitize(patient.age.toString())}</div>
+                        <div><b>Address:</b> ${sanitize(patient.address)}</div>
+                        <div><b>Mobile No:</b> ${sanitize(patient.phone)}</div>
+                        <div><b>Join Date:</b> ${sanitize(patient.joiningDate)}</div>
+                    </div>
+                    <div class="qr-section">
+                        <div id="qrCode"></div>
+                    </div>
+                </div>
+            `;
+            new QRCode(document.getElementById('qrCode'), {
+                text: patient.id,
+                width: 80,
+                height: 80
+            });
+            elements.idCardSection.classList.remove('hidden');
+        }
+
+        // Download ID Card
+        function initIdCardButtons(patient) {
+            elements.downloadCard.addEventListener('click', () => {
+                html2canvas(elements.idCard).then(canvas => {
+                    const link = document.createElement('a');
+                    link.href = canvas.toDataURL('image/png');
+                    link.download = `IDCard_${patient.id}.png`;
+                    link.click();
+                });
+            });
+            elements.closeCard.addEventListener('click', () => {
+                elements.idCardSection.classList.add('hidden');
+                elements.registerSection.classList.add('hidden');
+                elements.showRegisterForm.parentElement.classList.remove('hidden');
+            });
+        }
+
+        // Login Handling
+        document.getElementById('loginForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const username = sanitize(document.getElementById('username').value.trim());
+            const password = document.getElementById('password').value.trim();
+            const isValid = staffCredentials.some(cred => cred.username === username && cred.passwordHash === password);
+            if (isValid) {
+                document.getElementById('loginSection').classList.add('hidden');
+                document.getElementById('staffDashboard').classList.remove('hidden');
+                document.getElementById('publicSection').classList.add('hidden');
+                loadPatients();
+                loadAttendance();
+                loadReviews();
+                loadChart();
+            } else {
+                document.getElementById('loginError').classList.remove('hidden');
+            }
+        });
+
+        // Logout Handling
+        document.getElementById('logoutButton').addEventListener('click', function() {
+            document.getElementById('staffDashboard').classList.add('hidden');
+            document.getElementById('loginSection').classList.remove('hidden');
+            document.getElementById('publicSection').classList.remove('hidden');
+            document.getElementById('loginForm').reset();
+            document.getElementById('loginError').classList.add('hidden');
+        });
+
+        // Show Registration Form
+        elements.showRegisterForm.addEventListener('click', function() {
+            elements.registerSection.classList.remove('hidden');
+            elements.idCardSection.classList.add('hidden');
+            this.parentElement.classList.add('hidden');
+            clearFormErrors('patientForm');
+        });
+
+        // Patient Registration
+        elements.patientForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            clearFormErrors('patientForm');
+
+            try {
+                const name = sanitize(document.getElementById('name').value.trim());
+                const address = sanitize(document.getElementById('address').value.trim());
+                const age = parseInt(document.getElementById('age').value);
+                const phone = sanitize(document.getElementById('phone').value.trim());
+                const healthIssues = sanitize(document.getElementById('healthIssues').value.trim());
+                const surgery = sanitize(document.getElementById('surgery').value.trim());
+                const paralysisStatus = document.getElementById('paralysisStatus').value;
+                const otherDetails = sanitize(document.getElementById('otherDetails').value.trim());
+
+                let valid = true;
+                if (!name.match(/^[A-Za-z\s]+$/)) {
+                    showFormError('name', 'nameError');
+                    valid = false;
+                }
+                if (!address) {
+                    showFormError('address', 'addressError');
+                    valid = false;
+                }
+                if (isNaN(age) || age < 0 || age > 120) {
+                    showFormError('age', 'ageError');
+                    valid = false;
+                }
+                if (!phone.match(/^[\d\s\-\+]+$/)) {
+                    showFormError('phone', 'phoneError');
+                    valid = false;
+                }
+                if (!healthIssues) {
+                    showFormError('healthIssues', 'healthIssuesError');
+                    valid = false;
+                }
+                if (!paralysisStatus) {
+                    showFormError('paralysisStatus', 'paralysisStatusError');
+                    valid = false;
+                }
+
+                if (!valid) {
+                    alert('Please correct the highlighted fields.');
+                    return;
+                }
+
+                lastPatientId++;
+                const id = `GHLK${String(lastPatientId).padStart(4, '0')}`;
+                const joiningDate = new Date().toLocaleDateString();
+
+                const patient = {
+                    id,
+                    name,
+                    address,
+                    age,
+                    phone,
+                    healthIssues,
+                    surgery: surgery || 'None',
+                    paralysisStatus,
+                    otherDetails: otherDetails || 'None',
+                    joiningDate,
+                    bedNumber: null,
+                    healthStatus: 'Stable'
+                };
+                patients.push(patient);
+
+                loadPatients();
+                this.reset();
+                showToast(`Patient ${id} registered successfully!`);
+                generateIdCard(patient);
+                initIdCardButtons(patient);
+            } catch (err) {
+                console.error('Registration Error:', err);
+                alert('An error occurred during registration. Please try again.');
+            }
+        });
+
+        // QR Scanner
+        document.getElementById('startScanner').addEventListener('click', function() {
+            if (html5QrCode) return;
+            if (!window.location.protocol.includes('https') && window.location.hostname !== 'localhost') {
+                alert('QR scanning requires HTTPS or localhost. Please use a secure context or enter ID manually.');
+                return;
+            }
+            html5QrCode = new Html5Qrcode('qrVideo');
+            const qrCodeSuccessCallback = (decodedText) => {
+                let patientId = decodedText.match(/^GHLK\d{4}$/) ? decodedText : decodedText.split('/').pop();
+                if (!patientId.match(/^GHLK\d{4}$/)) {
+                    elements.scannerOutput.innerText = 'Invalid QR code format.';
+                    return;
+                }
+                elements.scannerOutput.innerText = `Successfully scanned: ${patientId}`;
+                stopScanner();
+                document.getElementById('patientId').value = patientId;
+                checkPatientId(patientId);
+            };
+            const qrCodeErrorCallback = () => {
+                elements.scannerOutput.innerText = '';
+            };
+            const config = { fps: 10, qrbox: { width: 250, height: 250 } };
+            html5QrCode.start({ facingMode: 'environment' }, config, qrCodeSuccessCallback, qrCodeErrorCallback)
+                .then(() => {
+                    document.getElementById('startScanner').classList.add('hidden');
+                    document.getElementById('stopScanner').classList.remove('hidden');
+                    elements.scannerOutput.innerText = 'Scanning...';
+                })
+                .catch(err => {
+                    console.error('Scanner Start Failed:', err);
+                    alert('Failed to access camera. Please allow camera permissions or enter ID manually.');
+                    html5QrCode = null;
+                    elements.scannerOutput.innerText = '';
+                });
+        });
+
+        // Stop Scanner
+        document.getElementById('stopScanner').addEventListener('click', stopScanner);
+
+        function stopScanner() {
+            if (html5QrCode) {
+                html5QrCode.stop()
+                    .then(() => {
+                        document.getElementById('startScanner').classList.remove('hidden');
+                        document.getElementById('stopScanner').classList.add('hidden');
+                        elements.scannerOutput.innerText = '';
+                        html5QrCode.clear();
+                        html5QrCode = null;
+                    })
+                    .catch(err => console.error('Stop Scanner:', err));
+            }
+        }
+
+        // Check Patient ID
+        document.getElementById('checkId').addEventListener('click', function() {
+            const patientId = sanitize(document.getElementById('patientId').value.trim());
+            clearFormErrors('patientId');
+            if (!getElementById('patientId').value.match(/^GHLK\d{4}$/)) {
+                showFormError('patientId', 'patientIdError');
+                alert('Invalid Patient ID format (e.g., GHLK0001).');
+                return;
+            }
+            checkPatientId(patientId);
+        });
+
+        function checkPatientId(patientId) {
+            if (!patientId.match(/^GHLK\d{4}$/)) {
+                elements.scannerOutput.innerText = 'Invalid Patient ID format.';
+                return;
+            }
+            const patient = patients.find(p => p.id === patientId);
+            document.getElementById('noDetails').classList.add('hidden');
+            document.getElementById('patientDetailsSection').classList.add('hidden');
+            if (patient) {
+                document.getElementById('patientDetails').innerHTML = `
+                    <p><strong>ID:</strong> ${sanitize(patient.id)}</p>
+                    <p><strong>Name:</strong> ${sanitize(patient.name)}</p>
+                    <p><strong>Address:</strong> ${sanitize(patient.address)}</p>
+                    <p><strong>Age:</strong> ${sanitize(patient.age.toString())}</p>
+                    <p><strong>Phone:</strong> ${sanitize(patient.phone)}</p>
+                    <p><strong>Health Issues:</strong> ${sanitize(patient.healthIssues)}</p>
+                    <p><strong>Surgery History:</strong> ${sanitize(patient.surgery)}</p>
+                    <p><strong>Paralysis Status:</strong> ${sanitize(patient.paralysisStatus)}</p>
+                    <p><strong>Other Details:</strong> ${sanitize(patient.otherDetails)}</p>
+                    <p><strong>Joining Date:</strong> ${sanitize(patient.joiningDate)}</p>
+                    <p><strong>Health Status:</strong> ${sanitize(patient.healthStatus)}</p>
+                `;
+                const patientRecords = attendanceRecords.filter(r => r.patientId === patientId);
+                const tbody = document.querySelector('#patientAttendanceTable tbody');
+                tbody.innerHTML = '';
+                patientRecords.forEach(r => {
+                    const row = `<tr>
+                        <td>${sanitize(r.date)}</td>
+                        <td>${sanitize(r.bedNumber || '-')}</td>
+                        <td>${sanitize(r.healthStatus)}</td>
+                    </tr>`;
+                    tbody.innerHTML += row;
+                });
+                document.getElementById('patientDetailsSection').classList.remove('hidden');
+                document.getElementById('patientId').value = '';
+            } else {
+                document.getElementById('noDetails').classList.remove('hidden');
+            }
+        }
+
+        // Attendance & Bed Management
+        document.getElementById('attendanceForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const patientId = sanitize(document.getElementById('patientId').value.trim());
+            if (!patientId.match(/^GHLK\d{4}$/)) {
+                alert('Invalid Patient ID format (e.g., GHLK0001).');
+                return;
+            }
+            const bedNumber = document.getElementById('bedNumber').value || null;
+            const healthStatus = document.getElementById('healthStatus').value;
+            const patient = patients.find(p => p.id === patientId);
+            if (patient) {
+                patient.bedNumber = bedNumber;
+                patient.healthStatus = healthStatus;
+                attendanceRecords.push({
+                    date: new Date().toLocaleString(),
+                    patientId,
+                    name: sanitize(patient.name),
+                    bedNumber,
+                    healthStatus
+                });
+                loadPatients();
+                loadAttendance();
+                loadChart();
+                checkPatientId(patientId);
+                this.reset();
+            } else {
+                alert('Invalid Patient ID.');
+            }
+        });
+
+        // Review Submission
+        document.getElementById('reviewForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            clearFormErrors('reviewForm');
+            const name = sanitize(document.getElementById('reviewName').value.trim());
+            const text = sanitize(document.getElementById('reviewText').value.trim());
+            let valid = true;
+            if (!name.match(/^[A-Za-z\s]+$/)) {
+                showFormError('reviewName', 'reviewNameError');
+                valid = false;
+            }
+            if (!text) {
+                showFormError('reviewText', 'reviewTextError');
+                valid = false;
+            }
+            if (!valid) {
+                alert('Please correct the highlighted fields.');
+                return;
+            }
+            const review = {
+                name,
+                text,
+                date: new Date().toLocaleDateString()
+            };
+            reviews.push(review);
+            loadReviews();
+            this.reset();
+        });
+
+        // Data Import
+        document.getElementById('dataUpload').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file && file.type === 'application/json') {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    try {
+                        const data = JSON.parse(e.target.result);
+                        if (!data.patients || !Array.isArray(data.patients) ||
+                            !data.attendanceRecords || !Array.isArray(data.attendanceRecords) ||
+                            !data.reviews || !Array.isArray(data.reviews) ||
+                            isNaN(data.lastPatientId) ||
+                            !data.patients.every(p => p.id.match(/^GHLK\d{4}$/))) {
+                            throw new Error('Invalid data structure or patient IDs');
+                        }
+                        patients = data.patients.map(p => ({
+                            ...p,
+                            name: sanitize(p.name),
+                            address: sanitize(p.address),
+                            phone: sanitize(p.phone),
+                            healthIssues: sanitize(p.healthIssues),
+                            surgery: sanitize(p.surgery),
+                            otherDetails: sanitize(p.otherDetails)
+                        }));
+                        attendanceRecords = data.attendanceRecords.map(r => ({
+                            ...r,
+                            name: sanitize(r.name)
+                        }));
+                        reviews = data.reviews.map(r => ({
+                            ...r,
+                            name: sanitize(r.name),
+                            text: sanitize(r.text)
+                        }));
+                        lastPatientId = data.lastPatientId || 0;
+                        loadPatients();
+                        loadAttendance();
+                        loadReviews();
+                        loadChart();
+                        showToast('Data imported successfully!');
+                    } catch (err) {
+                        console.error('JSON Parse Error:', err);
+                        alert('Invalid JSON file. Ensure it contains valid patients, attendanceRecords, reviews, and lastPatientId.');
+                    }
+                };
+                reader.readAsText(file);
+            } else {
+                alert('Please upload a valid JSON file.');
+            }
+        });
+
+        // Data Export
+        document.getElementById('saveData').addEventListener('click', function() {
+            const data = {
+                patients,
+                attendanceRecords,
+                reviews,
+                lastPatientId
+            };
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'ghlk_data.json';
+            a.click();
+            window.URL.revokeObjectURL(url);
+            showToast('Data exported successfully!');
+        });
+
+        // Load Patients with Sorting
+        function loadPatients() {
+            const tbody = document.querySelector('#patientTable tbody');
+            if (!tbody) return;
+            const sortedPatients = [...patients].sort((a, b) => {
+                const valA = a[sortConfig.key];
+                const valB = b[sortConfig.key];
+                const modifier = sortConfig.direction === 'asc' ? 1 : -1;
+                return typeof valA === 'string' ? valA.localeCompare(valB) * modifier : (valA - valB) * modifier;
+            });
+            tbody.innerHTML = '';
+            sortedPatients.forEach(p => {
+                const row = `<tr>
+                    <td>${sanitize(p.id)}</td>
+                    <td>${sanitize(p.name)}</td>
+                    <td>${sanitize(p.address)}</td>
+                    <td>${sanitize(p.age.toString())}</td>
+                    <td>${sanitize(p.phone)}</td>
+                    <td>${sanitize(p.healthIssues)}</td>
+                    <td>${sanitize(p.paralysisStatus)}</td>
+                    <td>${sanitize(p.surgery)}</td>
+                    <td>${sanitize(p.otherDetails)}</td>
+                    <td>${sanitize(p.bedNumber || '-')}</td>
+                    <td>${sanitize(p.healthStatus)}</td>
+                </tr>`;
+                tbody.innerHTML += row;
+            });
+        }
+
+        // Table Sorting
+        document.querySelectorAll('#patientTable th[data-sort]').forEach(th => {
+            th.addEventListener('click', () => {
+                const key = th.getAttribute('data-sort');
+                if (sortConfig.key === key) {
+                    sortConfig.direction = sortConfig.direction === 'asc' ? 'desc' : 'asc';
+                } else {
+                    sortConfig.key = key;
+                    sortConfig.direction = 'asc';
+                }
+                loadPatients();
+            });
+        });
+
+        // Load Attendance
+        function loadAttendance() {
+            const tbody = document.querySelector('#attendanceTable tbody');
+            if (!tbody) return;
+            tbody.innerHTML = '';
+            attendanceRecords.sort((a, b) => new Date(b.date) - new Date(a.date));
+            attendanceRecords.forEach(r => {
+                const row = `<tr>
+                    <td>${sanitize(r.date)}</td>
+                    <td>${sanitize(r.patientId)}</td>
+                    <td>${sanitize(r.name)}</td>
+                    <td>${sanitize(r.bedNumber || '-')}</td>
+                    <td>${sanitize(r.healthStatus)}</td>
+                </tr>`;
+                tbody.innerHTML += row;
+            });
+        }
+
+        // Load Reviews
+        function loadReviews() {
+            const reviewList = document.getElementById('reviewList');
+            if (!reviewList) return;
+            reviewList.innerHTML = '';
+            reviews.forEach(r => {
+                const div = `<div class="border-b py-2">
+                    <p class="font-semibold">${sanitize(r.name)} - ${sanitize(r.date)}</p>
+                    <p class="text-gray-700">${sanitize(r.text)}</p>
+                </div>`;
+                reviewList.innerHTML += div;
+            });
+        }
+
+        // Load Health Status Chart
+        function loadChart() {
+            const ctx = document.getElementById('statusChart')?.getContext('2d');
+            if (!ctx) return;
+            try {
+                const statuses = ['Stable', 'Improving', 'Critical'];
+                const counts = statuses.map(status => attendanceRecords.filter(r => r.healthStatus === status).length);
+                if (window.statusChart) window.statusChart.destroy();
+                window.statusChart = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: statuses,
+                        datasets: [{
+                            label: 'Health Status Count',
+                            data: counts,
+                            backgroundColor: ['#4CAF50', '#2196F3', '#F44336']
+                        }]
+                    },
+                    options: { scales: { y: { beginAtZero: true } } }
+                });
+            } catch (err) {
+                console.error('Chart Error:', err);
+            }
+        }
+
+        // Initialize
+        loadReviews();
+    </script>
+</body>
+</html>
