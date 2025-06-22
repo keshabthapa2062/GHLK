@@ -8,7 +8,7 @@
         script-src 'self' https://cdn.tailwindcss.com https://cdn.jsdelivr.net https://unpkg.com https://cdnjs.cloudflare.com 'nonce-ghlk';
         style-src 'self' https://fonts.googleapis.com 'unsafe-inline';
         font-src https://fonts.gstatic.com;
-        img-src 'self' data: https://via.placeholder.com;
+        img-src 'self' data: https://placehold.co https://api.qrserver.com;
         media-src 'self';
         connect-src 'self' https://script.google.com https://accounts.google.com;
         frame-src 'none';
@@ -20,7 +20,6 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
     <script src="https://unpkg.com/html5-qrcode@2.3.9/minified/html5-qrcode.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
     <style>
@@ -33,7 +32,7 @@
         canvas { max-width: 100%; height: auto; }
         .hidden { display: none; }
         #qrVideo, #patientQrVideo { width: 100%; max-width: 300px; margin: 1rem auto; }
-        #scannerOutput, #patientScannerOutput { margin-top: 10px; font-weight: bold; text-align: center; color: #4CAF50; }
+        #scanner-output, #patient-scanner-output { margin-top: 10px; font-weight: bold; text-align: center; color: #4CAF50; }
         .error { color: #F44336; }
         input:invalid:focus, select:invalid:focus, textarea:invalid:focus { border-color: #F44336; }
         button:hover { transition: background-color 0.2s ease; }
@@ -49,7 +48,7 @@
         .details div { display: flex; }
         .details b { width: 100px; }
         .qr-section { margin-left: 10px; }
-        .qr-section canvas { width: 80px; height: 80px; }
+        .qr-section img { width: 80px; height: 80px; }
         .navbar { background-color: #10B981; padding: 1rem; }
         .navbar-container { max-width: 1200px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; }
         .navbar-logo { display: flex; align-items: center; }
@@ -67,7 +66,7 @@
     <nav class="navbar">
         <div class="navbar-container">
             <div class="navbar-logo">
-                <img src="https://via.placeholder.com/40x40.png?text=GHLK" alt="GHLK Logo">
+                <img src="https://placehold.co/40x40?text=GHLK" alt="GHLK Logo">
                 <h1>GHLK Patient Management System</h1>
             </div>
             <div class="navbar-buttons">
@@ -83,11 +82,11 @@
             <form id="loginForm" class="space-y-4">
                 <div>
                     <label for="username" class="block text-sm font-medium text-gray-700">Username</label>
-                    <input type="text" id="username" required class="mt-1 block w-full border border-gray-300 rounded-md p-2 focus:ring-green-500 focus:border-green-500" aria-label="Username">
+                    <input type="text" id="username" required class="mt-1 block w-full border border-gray-300 rounded-md p-2 focus:ring-none focus:border-gray-300" aria-label="Username">
                 </div>
                 <div>
                     <label for="password" class="block text-sm font-medium text-gray-700">Password</label>
-                    <input type="password" id="password" required class="mt-1 block w-full border border-gray-300 rounded-md p-2 focus:ring-green-500 focus:border-green-500" aria-label="Password">
+                    <input type="password" id="password" required class="mt-1 block w-full border border-gray-300 rounded-md p-2 focus:ring-none focus:border-gray-300" aria-label="Password">
                 </div>
                 <button type="submit" class="w-full bg-green-600 text-white font-semibold py-2 px-4 rounded-md hover:bg-green-700" aria-label="Login">Login</button>
             </form>
@@ -96,11 +95,11 @@
 
         <div id="patientQrSection" class="bg-white p-6 rounded-lg shadow-md mb-8 hidden">
             <h2 class="text-xl font-semibold mb-4 text-gray-800">Scan Your Patient ID</h2>
-            <div id="patientQrVideo" class="mx-auto"></div>
-            <div id="patientScannerOutput"></div>
+            <div id="patientQrVideo"></div>
+            <div id="patient-scanner-output"></div>
             <div class="flex justify-center space-x-4 mb-4">
-                <button id="startPatientScanner" class="bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700" aria-label="Start QR scanner">Start QR Scanner</button>
-                <button id="stopPatientScanner" class="bg-red-600 text-white py-2 px-4 rounded-md hover:bg-red-700 hidden" aria-label="Stop QR scanner">Stop QR Scanner</button>
+                <button id="startScannerPatient" class="bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700" aria-label="Start QR scanner">Start QR Scanner</button>
+                <button id="stopScannerPatient" class="bg-red-600 text-white py-2 px-4 rounded-md hover:bg-red-700 hidden" aria-label="Stop QR scanner">Stop QR Scanner</button>
             </div>
             <div id="patientInfo" class="mt-4 hidden">
                 <h3 class="text-lg font-semibold mb-2">Patient Information</h3>
@@ -114,17 +113,6 @@
             </div>
 
             <div class="bg-white p-6 rounded-lg shadow-md mb-8">
-                <h2 class="text-xl font-semibold mb-4 text-gray-800">Data Management</h2>
-                <div class="flex flex-col space-y-4">
-                    <div>
-                        <label for="dataUpload" class="block text-sm font-medium text-gray-700">Upload Data (ghlk_data.json)</label>
-                        <input type="file" id="dataUpload" accept=".json" class="mt-1 block w-full border border-gray-300 rounded-md p-2" aria-label="Upload JSON data">
-                    </div>
-                    <button id="saveData" class="w-full bg-blue-600 text-white font-semibold py-2 px-4 rounded-md hover:bg-blue-700" aria-label="Download data">Download Data as ghlk_data.json</button>
-                </div>
-            </div>
-
-            <div class="bg-white p-6 rounded-lg shadow-md mb-8">
                 <button id="showRegisterForm" class="w-full bg-green-600 text-white font-semibold py-2 px-4 rounded-md hover:bg-green-700" aria-label="Register new patient">Register New Patient</button>
             </div>
 
@@ -134,51 +122,51 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                             <label for="name" class="block text-sm font-medium text-gray-700">Name</label>
-                            <input type="text" id="name" required class="mt-1 block w-full border border-gray-300 rounded-md p-2 focus:ring-green-500 focus:border-green-500" pattern="[A-Za-z\s]+" aria-label="Patient name">
+                            <input type="text" id="name" required class="mt-1 block w-full border border-gray-300 rounded-md p-2 focus:ring-none focus:border-gray-300" pattern="[A-Za-z\s]+" aria-label="Patient name">
                             <p id="nameError" class="field-error">Letters and spaces only</p>
                         </div>
                         <div>
                             <label for="address" class="block text-sm font-medium text-gray-700">Address</label>
-                            <input type="text" id="address" required class="mt-1 block w-full border border-gray-300 rounded-md p-2 focus:ring-green-500 focus:border-green-500" aria-label="Patient address">
+                            <input type="text" id="address" required class="mt-1 block w-full border border-gray-300 rounded-md p-2 focus:ring-none focus:border-gray-300" aria-label="Patient address">
                             <p id="addressError" class="field-error">Address is required</p>
                         </div>
                         <div>
                             <label for="age" class="block text-sm font-medium text-gray-700">Age</label>
-                            <input type="number" id="age" required min="0" max="120" class="mt-1 block w-full border border-gray-300 rounded-md p-2 focus:ring-green-500 focus:border-green-500" aria-label="Patient age">
+                            <input type="number" id="age" required min="0" max="120" class="mt-1 block w-full border border-gray-300 rounded-md p-2 focus:ring-none focus:border-gray-300" aria-label="Patient age">
                             <p id="ageError" class="field-error">Age must be 0-120</p>
                         </div>
                         <div>
                             <label for="phone" class="block text-sm font-medium text-gray-700">Phone Number</label>
-                            <input type="tel" id="phone" required class="mt-1 block w-full border border-gray-300 rounded-md p-2 focus:ring-green-500 focus:border-green-500" pattern="[\d\s\-\+]+" aria-label="Patient phone number">
-                            <p id="phoneError" class="field-error">Numbers, spaces, +, or - only</p>
+                            <input type="tel" id="phone" required class="mt-1 block w-full border border-gray-300 rounded-md p-2 focus:ring-none focus:border-gray-300" pattern="[0-9\s\-\+\(\)]+" aria-label="Patient phone number">
+                            <p id="phoneError" class="field-error">Numbers, spaces, +, -, or () only</p>
                         </div>
                         <div>
                             <label for="joiningDate" class="block text-sm font-medium text-gray-700">Joining Date</label>
-                            <input type="date" id="joiningDate" required class="mt-1 block w-full border border-gray-300 rounded-md p-2 focus:ring-green-500 focus:border-green-500" aria-label="Joining date">
+                            <input type="date" id="joiningDate" required class="mt-1 block w-full border border-gray-300 rounded-md p-2 focus:ring-none focus:border-gray-300" aria-label="Joining date">
                             <p id="joiningDateError" class="field-error">Valid date required (not in future)</p>
                         </div>
                     </div>
                     <div>
                         <label for="healthIssues" class="block text-sm font-medium text-gray-700">Health Issues</label>
-                        <textarea id="healthIssues" required class="mt-1 block w-full border border-gray-300 rounded-md p-2 focus:ring-green-500 focus:border-green-500" aria-label="Patient health issues"></textarea>
+                        <textarea id="healthIssues" required class="mt-1 block w-full border border-gray-300 rounded-md p-2 focus:ring-none focus:border-gray-300" aria-label="Patient health issues"></textarea>
                         <p id="healthIssuesError" class="field-error">Health issues are required</p>
                     </div>
                     <div>
                         <label for="surgery" class="block text-sm font-medium text-gray-700">Surgery History</label>
-                        <textarea id="surgery" class="mt-1 block w-full border border-gray-300 rounded-md p-2 focus:ring-green-500 focus:border-green-500" aria-label="Patient surgery history"></textarea>
+                        <textarea id="surgery" class="mt-1 block w-full border border-gray-300 rounded-md p-2 focus:ring-none focus:border-gray-300" aria-label="Patient surgery history"></textarea>
                     </div>
                     <div>
                         <label for="paralysisStatus" class="block text-sm font-medium text-gray-700">Paralysis Status</label>
-                        <select id="paralysisStatus" required class="mt-1 block w-full border border-gray-300 rounded-md p-2 focus:ring-green-500 focus:border-green-500" aria-label="Patient paralysis status">
+                        <select id="paralysisStatus" required class="mt-1 block w-full border border-gray-300 rounded-md p-2 focus:ring-none focus:border-gray-300" aria-label="Patient paralysis status">
                             <option value="None">None</option>
                             <option value="Partial">Partial</option>
-                            <option value="Full">Full</option>
+                            <option value="Full">Paralysis</option>
                         </select>
                         <p id="paralysisStatusError" class="field-error">Please select a status</p>
                     </div>
                     <div>
                         <label for="otherDetails" class="block text-sm font-medium text-gray-700">Other Details</label>
-                        <textarea id="otherDetails" class="mt-1 block w-full border border-gray-300 rounded-md p-2 focus:ring-green-500 focus:border-green-500" aria-label="Other patient details"></textarea>
+                        <textarea id="otherDetails" class="mt-1 block w-full border border-gray-300 rounded-md p-2 focus:ring-none focus:border-gray-300" aria-label="Other patient details"></textarea>
                     </div>
                     <button type="submit" class="w-full bg-green-600 text-white font-semibold py-2 px-4 rounded-md hover:bg-green-700" aria-label="Register patient">Register Patient</button>
                 </form>
@@ -196,18 +184,18 @@
                 <h2 class="text-xl font-semibold mb-4 text-gray-800">Attendance & Bed Management</h2>
                 <div id="qrScannerSection">
                     <p class="text-gray-700 mb-2">Scan QR Code or Enter Patient ID</p>
-                    <div id="qrVideo" class="mx-auto"></div>
-                    <div id="scannerOutput"></div>
+                    <div id="qrVideo"></div>
+                    <div id="scanner-output"></div>
                     <div class="flex justify-center space-x-4 mb-4">
-                        <button id="startScanner" class="bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700" aria-label="Start QR scanner">Start QR Scanner</button>
+                        <button id="startScanner" class="bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700" aria-label="Start QR scanner">Start QR Scanner</button>
                         <button id="stopScanner" class="bg-red-600 text-white py-2 px-4 rounded-md hover:bg-red-700 hidden" aria-label="Stop QR scanner">Stop QR Scanner</button>
                     </div>
                     <div>
                         <label for="patientId" class="block text-sm font-medium text-gray-700">Patient ID</label>
-                        <input type="text" id="patientId" class="mt-1 block w-full border border-gray-300 rounded-md p-2 focus:ring-green-500 focus:border-green-500" pattern="GHLK\d{4}" aria-label="Patient ID">
+                        <input type="text" id="patientId" class="mt-1 block w-full border border-gray-300 rounded-md p-2 focus:ring-none focus:border-gray-300" pattern="GHLK\d{4}" aria-label="Patient ID">
                         <p id="patientIdError" class="field-error">Format: GHLK followed by 4 digits</p>
                     </div>
-                    <button id="checkId" class="w-full bg-green-600 text-white font-semibold py-2 px-4 rounded-md hover:bg-green-700 mt-4" aria-label="Check patient ID">Check ID</button>
+                    <button id="checkId" class="w-full bg-blue-600 text-white font-semibold py-2 px-4 rounded-md hover:bg-blue-700 mt-4" aria-label="Check patient ID">Check ID</button>
                     <p id="noDetails" class="text-red-500 mt-2 hidden">No patient found for this ID</p>
                 </div>
                 <div id="patientDetailsSection" class="mt-4 hidden">
@@ -226,51 +214,51 @@
                                 </div>
                                 <div>
                                     <label for="editName" class="block text-sm font-medium text-gray-700">Name</label>
-                                    <input type="text" id="editName" required class="mt-1 block w-full border border-gray-300 rounded-md p-2 focus:ring-green-500 focus:border-green-500" pattern="[A-Za-z\s]+" aria-label="Patient name">
+                                    <input type="text" id="editName" required class="mt-1 block w-full border border-gray-300 rounded-md p-2 focus:ring-none focus:border-gray-300" pattern="[A-Za-z\s]+" aria-label="Patient name">
                                     <p id="editNameError" class="field-error">Letters and spaces only</p>
                                 </div>
                                 <div>
                                     <label for="editAddress" class="block text-sm font-medium text-gray-700">Address</label>
-                                    <input type="text" id="editAddress" required class="mt-1 block w-full border border-gray-300 rounded-md p-2 focus:ring-green-500 focus:border-green-500" aria-label="Patient address">
+                                    <input type="text" id="editAddress" required class="mt-1 block w-full border border-gray-300 rounded-md p-2 focus:ring-none focus:border-gray-300" aria-label="Patient address">
                                     <p id="editAddressError" class="field-error">Address is required</p>
                                 </div>
                                 <div>
                                     <label for="editAge" class="block text-sm font-medium text-gray-700">Age</label>
-                                    <input type="number" id="editAge" required min="0" max="120" class="mt-1 block w-full border border-gray-300 rounded-md p-2 focus:ring-green-500 focus:border-green-500" aria-label="Patient age">
+                                    <input type="number" id="editAge" required min="0" max="120" class="mt-1 block w-full border border-gray-300 rounded-md p-2 focus:ring-none focus:border-gray-300" aria-label="Patient age">
                                     <p id="editAgeError" class="field-error">Age must be 0-120</p>
                                 </div>
                                 <div>
                                     <label for="editPhone" class="block text-sm font-medium text-gray-700">Phone Number</label>
-                                    <input type="tel" id="editPhone" required class="mt-1 block w-full border border-gray-300 rounded-md p-2 focus:ring-green-500 focus:border-green-500" pattern="[\d\s\-\+]+" aria-label="Patient phone number">
-                                    <p id="editPhoneError" class="field-error">Numbers, spaces, +, or - only</p>
+                                    <input type="tel" id="editPhone" required class="mt-1 block w-full border border-gray-300 rounded-md p-2 focus:ring-none focus:border-gray-300" pattern="[0-9\s\-\+\(\)]+" aria-label="Patient phone number">
+                                    <p id="editPhoneError" class="field-error">Numbers, spaces, +, -, or () only</p>
                                 </div>
                                 <div>
                                     <label for="editJoiningDate" class="block text-sm font-medium text-gray-700">Joining Date</label>
-                                    <input type="date" id="editJoiningDate" required class="mt-1 block w-full border border-gray-300 rounded-md p-2 focus:ring-green-500 focus:border-green-500" aria-label="Joining date">
+                                    <input type="date" id="editJoiningDate" required class="mt-1 block w-full border border-gray-300 rounded-md p-2 focus:ring-none focus:border-gray-300" aria-label="Joining date">
                                     <p id="editJoiningDateError" class="field-error">Valid date required (not in future)</p>
                                 </div>
                             </div>
                             <div>
                                 <label for="editHealthIssues" class="block text-sm font-medium text-gray-700">Health Issues</label>
-                                <textarea id="editHealthIssues" required class="mt-1 block w-full border border-gray-300 rounded-md p-2 focus:ring-green-500 focus:border-green-500" aria-label="Patient health issues"></textarea>
+                                <textarea id="editHealthIssues" required class="mt-1 block w-full border border-gray-300 rounded-md p-2 focus:ring-none focus:border-gray-300" aria-label="Patient health issues"></textarea>
                                 <p id="editHealthIssuesError" class="field-error">Health issues are required</p>
                             </div>
                             <div>
                                 <label for="editSurgery" class="block text-sm font-medium text-gray-700">Surgery History</label>
-                                <textarea id="editSurgery" class="mt-1 block w-full border border-gray-300 rounded-md p-2 focus:ring-green-500 focus:border-green-500" aria-label="Patient surgery history"></textarea>
+                                <textarea id="editSurgery" class="mt-1 block w-full border border-gray-300 rounded-md p-2 focus:ring-none focus:border-gray-300" aria-label="Patient surgery history"></textarea>
                             </div>
                             <div>
                                 <label for="editParalysisStatus" class="block text-sm font-medium text-gray-700">Paralysis Status</label>
-                                <select id="editParalysisStatus" required class="mt-1 block w-full border border-gray-300 rounded-md p-2 focus:ring-green-500 focus:border-green-500" aria-label="Patient paralysis status">
+                                <select id="editParalysisStatus" required class="mt-1 block w-full border border-gray-300 rounded-md p-2 focus:ring-none focus:border-gray-300" aria-label="Patient paralysis status">
                                     <option value="None">None</option>
                                     <option value="Partial">Partial</option>
-                                    <option value="Full">Full</option>
+                                    <option value="Full">Paralysis</option>
                                 </select>
                                 <p id="editParalysisStatusError" class="field-error">Please select a status</p>
                             </div>
                             <div>
                                 <label for="editOtherDetails" class="block text-sm font-medium text-gray-700">Other Details</label>
-                                <textarea id="editOtherDetails" class="mt-1 block w-full border border-gray-300 rounded-md p-2 focus:ring-green-500 focus:border-green-500" aria-label="Other patient details"></textarea>
+                                <textarea id="editOtherDetails" class="mt-1 block w-full border border-gray-300 rounded-md p-2 focus:ring-none focus:border-gray-300" aria-label="Other patient details"></textarea>
                             </div>
                             <div class="flex justify-end space-x-4">
                                 <button type="submit" class="bg-green-600 text-white font-semibold py-2 px-4 rounded-md hover:bg-green-700" aria-label="Save changes">Save Changes</button>
@@ -282,11 +270,11 @@
                     <form id="attendanceForm" class="space-y-4" novalidate>
                         <div>
                             <label for="bedNumber" class="block text-sm font-medium text-gray-700">Bed Number</label>
-                            <input type="number" id="bedNumber" min="0" class="mt-1 block w-full border border-gray-300 rounded-md p-2 focus:ring-green-500 focus:border-green-500" aria-label="Bed number">
+                            <input type="number" id="bedNumber" min="0" class="mt-1 block w-full border border-gray-300 rounded-md p-2 focus:ring-none focus:border-gray-300" aria-label="Bed number">
                         </div>
                         <div>
                             <label for="healthStatus" class="block text-sm font-medium text-gray-700">Health Status</label>
-                            <select id="healthStatus" class="mt-1 block w-full border border-gray-300 rounded-md p-2 focus:ring-green-500 focus:border-green-500" aria-label="Health status">
+                            <select id="healthStatus" class="mt-1 block w-full border border-gray-300 rounded-md p-2 focus:ring-none focus:border-gray-300" aria-label="Health status">
                                 <option value="Stable">Stable</option>
                                 <option value="Improving">Improving</option>
                                 <option value="Critical">Critical</option>
@@ -363,24 +351,25 @@
             <form id="reviewForm" class="space-y-4" novalidate>
                 <div>
                     <label for="reviewName" class="block text-sm font-medium text-gray-700">Your Name</label>
-                    <input type="text" id="reviewName" required class="mt-1 block w-full border border-gray-300 rounded-md p-2 focus:ring-green-500 focus:border-green-500" pattern="[A-Za-z\s]+" aria-label="Reviewer name">
-                    <p id="reviewNameError" class="field-error">Letters and spaces only</p>
+                    <input type="text" id="reviewName" required class="mt-1 block w-full border border-gray-300 rounded-md p-2 focus:ring-none focus:border-gray-300" pattern="[A-Za-z\s\.\-]+" aria-label="Reviewer name">
+                    <p id="reviewNameError" class="field-error">Letters, spaces, dots, or hyphens only</p>
                 </div>
                 <div>
                     <label for="reviewText" class="block text-sm font-medium text-gray-700">Review</label>
-                    <textarea id="reviewText" required class="mt-1 block w-full border border-gray-300 rounded-md p-2 focus:ring-green-500 focus:border-green-500" aria-label="Review text"></textarea>
+                    <textarea id="reviewText" required class="mt-1 block w-full border border-gray-300 rounded-md p-2 focus:ring-none focus:border-gray-300" aria-label="Review text"></textarea>
                     <p id="reviewTextError" class="field-error">Review text is required</p>
                 </div>
                 <button type="submit" class="w-full bg-green-600 text-white font-semibold py-2 px-4 rounded-md hover:bg-green-700" aria-label="Submit review">Submit Review</button>
             </form>
+            <button id="testApi" class="w-full bg-blue-600 text-white font-semibold py-2 px-4 rounded-md hover:bg-blue-700 mt-4" aria-label="Test API">Test API</button>
             <h2 class="text-xl font-semibold mt-6 mb-4 text-gray-800">Reviews</h2>
             <div id="reviewList" class="space-y-4"></div>
         </div>
     </div>
 
     <script nonce="ghlk">
-        // Replace with your Google Apps Script Web App URL
-        const API_URL = 'https://script.google.com/macros/s/AKfycbxNZ0lCHVkugQtODfBZTXJKabkv1iMTqkKSgVcb8G-yNWpLupbnFHNYMvTp6NP93vDs/exec';
+        // Google Apps Script Web App URL
+        const API_URL = 'https://script.google.com/macros/s/AKfycby-LtEL5eiysUYCWSLbepqxet03imcHlLT7LMeddyqzpVgY7J0Wo8koHCqka1QGRSvROw/exec';
 
         // Mock credentials (demo only; use server-side auth in production)
         const staffCredentials = [
@@ -393,8 +382,12 @@
             patientForm: document.getElementById('patientForm'),
             registerSection: document.getElementById('registerSection'),
             showRegisterForm: document.getElementById('showRegisterForm'),
-            scannerOutput: document.getElementById('scannerOutput'),
-            patientScannerOutput: document.getElementById('patientScannerOutput'),
+            scannerOutput: document.getElementById('scanner-output'),
+            patientScannerOutput: document.getElementById('patient-scanner-output'),
+            startScanner: document.getElementById('startScanner'),
+            stopScanner: document.getElementById('stopScanner'),
+            startScannerPatient: document.getElementById('startScannerPatient'),
+            stopScannerPatient: document.getElementById('stopScannerPatient'),
             idCardSection: document.getElementById('idCardSection'),
             idCard: document.getElementById('idCard'),
             downloadCard: document.getElementById('downloadCard'),
@@ -408,8 +401,15 @@
             editDetailsButton: document.getElementById('editDetailsButton'),
             editPatientSection: document.getElementById('editPatientSection'),
             editPatientForm: document.getElementById('editPatientForm'),
-            cancelEdit: document.getElementById('cancelEdit')
+            cancelEdit: document.getElementById('cancelEdit'),
+            attendanceForm: document.getElementById('attendanceForm'),
+            reviewForm: document.getElementById('reviewForm'),
+            testApi: document.getElementById('testApi')
         };
+
+        // QR Scanner instances
+        let html5QrCode = null; // Staff scanner
+        let patientQrCode = null; // Patient scanner
 
         // XSS sanitization
         function sanitize(input) {
@@ -432,18 +432,24 @@
         // Clear form errors
         function clearFormErrors(formId) {
             const form = document.getElementById(formId);
+            if (!form) return;
             form.querySelectorAll('.field-error').forEach(error => error.style.display = 'none');
             form.querySelectorAll('input, select, textarea').forEach(input => input.classList.remove('border-red-500'));
         }
 
         // Show form error
         function showFormError(inputId, errorId) {
-            document.getElementById(errorId).style.display = 'block';
-            document.getElementById(inputId).classList.add('border-red-500');
+            const input = document.getElementById(inputId);
+            const error = document.getElementById(errorId);
+            if (input && error) {
+                error.style.display = 'block';
+                input.classList.add('border-red-500');
+            }
         }
 
         // Generate ID Card
         function generateIdCard(patient) {
+            console.log('Generating ID card for:', patient);
             elements.idCard.innerHTML = `
                 <div class="company-info">
                     <h2>GHLK Health Care Center</h2>
@@ -459,21 +465,17 @@
                         <div><b>Join Date:</b> ${sanitize(patient.joiningDate)}</div>
                     </div>
                     <div class="qr-section">
-                        <div id="qrCode"></div>
+                        <img src="https://api.qrserver.com/v1/create-qr-code/?size=80x80&data=${encodeURIComponent(patient.id)}" alt="QR Code" width="80" height="80">
                     </div>
                 </div>
             `;
-            new QRCode(document.getElementById('qrCode'), {
-                text: patient.id,
-                width: 80,
-                height: 80
-            });
             elements.idCardSection.classList.remove('hidden');
         }
 
         // Download ID Card
         function initIdCardButtons(patient) {
             elements.downloadCard.addEventListener('click', () => {
+                console.log('Downloading ID card for:', patient.id);
                 html2canvas(elements.idCard).then(canvas => {
                     const link = document.createElement('a');
                     link.href = canvas.toDataURL('image/png');
@@ -482,6 +484,7 @@
                 });
             }, { once: true });
             elements.closeCard.addEventListener('click', () => {
+                console.log('Closing ID card section');
                 elements.idCardSection.classList.add('hidden');
                 elements.registerSection.classList.add('hidden');
                 elements.showRegisterForm.parentElement.classList.remove('hidden');
@@ -491,15 +494,15 @@
         // API Request Helper
         async function apiRequest(action, data) {
             try {
-                console.log('API Request:', { action, data }); // Debug
+                console.log('API Request:', { action, data });
                 const response = await fetch(API_URL, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ action, ...data })
                 });
-                console.log('Response status:', response.status, response.statusText); // Debug
-                const text = await response.text(); // Get raw response
-                console.log('Raw response:', text); // Debug
+                console.log('Response status:', response.status, response.statusText);
+                const text = await response.text();
+                console.log('Raw response:', text);
                 let result;
                 try {
                     result = JSON.parse(text);
@@ -511,7 +514,7 @@
                 }
                 return result;
             } catch (err) {
-                console.error('API Error:', err.message, 'Action:', action); // Debug
+                console.error('API Error:', err.message, 'Action:', action);
                 showToast('Error: ' + err.message, true);
                 throw err;
             }
@@ -520,10 +523,12 @@
         // Check Camera Permissions
         async function checkCameraPermission() {
             if (!navigator.permissions || !navigator.permissions.query) {
-                return true; // Fallback for browsers without permissions API
+                console.log('Permissions API not supported, assuming camera access granted');
+                return true;
             }
             try {
                 const permission = await navigator.permissions.query({ name: 'camera' });
+                console.log('Camera permission state:', permission.state);
                 return permission.state === 'granted';
             } catch (err) {
                 console.error('Permission Check Error:', err);
@@ -531,9 +536,192 @@
             }
         }
 
+        // Stop Staff Scanner
+        function stopScanner() {
+            console.log('Stop QR scanner clicked');
+            if (html5QrCode) {
+                html5QrCode.stop().then(() => {
+                    html5QrCode.clear();
+                    html5QrCode = null;
+                    elements.startScanner.classList.remove('hidden');
+                    elements.stopScanner.classList.add('hidden');
+                    elements.scannerOutput.innerText = '';
+                    console.log('Scanner stopped.');
+                }).catch(err => console.error('Stop scanner failed:', err));
+            }
+        }
+
+        // Stop Patient Scanner
+        function stopPatientScanner() {
+            console.log('Stop patient QR scanner clicked');
+            if (patientQrCode) {
+                patientQrCode.stop().then(() => {
+                    patientQrCode.clear();
+                    patientQrCode = null;
+                    elements.startScannerPatient.classList.remove('hidden');
+                    elements.stopScannerPatient.classList.add('hidden');
+                    elements.patientScannerOutput.innerText = '';
+                    console.log('Patient scanner stopped.');
+                }).catch(err => console.error('Stop patient scanner failed:', err));
+            }
+        }
+
+        // Check Patient ID (used by both scanners)
+        async function checkPatientId(patientId, isStaff = false) {
+            console.log('Checking patient ID:', patientId, 'Is staff:', isStaff);
+            if (!patientId.match(/^GHLK\d{4}$/)) {
+                const outputElement = isStaff ? elements.scannerOutput : elements.patientScannerOutput;
+                outputElement.innerText = 'Invalid QR code format.';
+                return;
+            }
+            try {
+                const result = await apiRequest('getPatients');
+                const patient = result.data.find(p => p.id === patientId);
+                if (isStaff) {
+                    document.getElementById('noDetails').classList.add('hidden');
+                    document.getElementById('patientDetailsSection').classList.add('hidden');
+                    elements.editPatientSection.classList.add('hidden');
+                    elements.attendanceForm.classList.remove('hidden');
+                    if (patient) {
+                        document.getElementById('patientDetails').innerHTML = `
+                            <p><strong>ID:</strong> ${sanitize(patient.id)}</p>
+                            <p><strong>Name:</strong> ${sanitize(patient.name)}</p>
+                            <p><strong>Address:</strong> ${sanitize(patient.address)}</p>
+                            <p><strong>Age:</strong> ${sanitize(patient.age.toString())}</p>
+                            <p><strong>Phone:</strong> ${sanitize(patient.phone)}</p>
+                            <p><strong>Health Issues:</strong> ${sanitize(patient.healthIssues)}</p>
+                            <p><strong>Surgery History:</strong> ${sanitize(patient.surgery)}</p>
+                            <p><strong>Paralysis Status:</strong> ${sanitize(patient.paralysisStatus)}</p>
+                            <p><strong>Other Details:</strong> ${sanitize(patient.otherDetails)}</p>
+                            <p><strong>Joining Date:</strong> ${sanitize(patient.joiningDate)}</p>
+                            <p><strong>Health Status:</strong> ${sanitize(patient.healthStatus)}</p>
+                        `;
+                        document.getElementById('editId').value = patient.id;
+                        document.getElementById('editName').value = patient.name;
+                        document.getElementById('editAddress').value = patient.address;
+                        document.getElementById('editAge').value = patient.age;
+                        document.getElementById('editPhone').value = patient.phone;
+                        document.getElementById('editHealthIssues').value = patient.healthIssues;
+                        document.getElementById('editSurgery').value = patient.surgery;
+                        document.getElementById('editParalysisStatus').value = patient.paralysisStatus;
+                        document.getElementById('editOtherDetails').value = patient.otherDetails;
+                        document.getElementById('editJoiningDate').value = patient.joiningDate.split('/').reverse().join('-');
+                        const attendanceResult = await apiRequest('getAttendance');
+                        const patientRecords = attendanceResult.data.filter(r => r.patientId === patientId);
+                        const tbody = document.querySelector('#patientAttendanceTable tbody');
+                        tbody.innerHTML = '';
+                        patientRecords.forEach(r => {
+                            const row = `<tr>
+                                <td>${sanitize(r.date)}</td>
+                                <td>${sanitize(r.bedNumber || '-')}</td>
+                                <td>${sanitize(r.healthStatus)}</td>
+                            </tr>`;
+                            tbody.innerHTML += row;
+                        });
+                        document.getElementById('patientDetailsSection').classList.remove('hidden');
+                        document.getElementById('patientId').value = '';
+                    } else {
+                        document.getElementById('noDetails').classList.remove('hidden');
+                        elements.scannerOutput.innerText = 'No patient found for this ID.';
+                    }
+                } else {
+                    document.getElementById('patientInfo').classList.add('hidden');
+                    if (patient) {
+                        document.getElementById('patientInfoDetails').innerHTML = `
+                            <p><strong>ID:</strong> ${sanitize(patient.id)}</p>
+                            <p><strong>Name:</strong> ${sanitize(patient.name)}</p>
+                            <p><strong>Joining Date:</strong> ${sanitize(patient.joiningDate)}</p>
+                        `;
+                        document.getElementById('patientInfo').classList.remove('hidden');
+                    } else {
+                        elements.patientScannerOutput.innerText = 'No patient found for this ID.';
+                    }
+                }
+            } catch (err) {
+                console.error('Check patient ID error:', err);
+                const outputElement = isStaff ? elements.scannerOutput : elements.patientScannerOutput;
+                outputElement.innerText = 'Error fetching patient data.';
+                showToast('Failed to fetch patient data: ' + err.message, true);
+            }
+        }
+
+        // Staff QR Scanner
+        elements.startScanner.addEventListener('click', function() {
+            console.log('Start QR scanner clicked');
+            if (html5QrCode) return;
+            if (window.location.hostname !== 'localhost') {
+                showToast('QR scanning requires localhost or HTTPS. Please run on http://localhost:5500.', true);
+                return;
+            }
+            html5QrCode = new Html5Qrcode('qrVideo');
+            const qrCodeSuccessCallback = (decodedText) => {
+                console.log('QR code scanned:', decodedText);
+                let patientId = decodedText.match(/^GHLK\d{4}$/) ? decodedText : decodedText.split('/').pop();
+                elements.scannerOutput.innerText = `Successfully scanned: ${patientId}`;
+                stopScanner();
+                document.getElementById('patientId').value = patientId;
+                checkPatientId(patientId, true);
+            };
+            const qrCodeErrorCallback = () => {
+                elements.scannerOutput.innerText = '';
+            };
+            const config = { fps: 10, qrbox: { width: 250, height: 250 } };
+            html5QrCode.start({ facingMode: 'environment' }, config, qrCodeSuccessCallback, qrCodeErrorCallback)
+                .then(() => {
+                    elements.startScanner.classList.add('hidden');
+                    elements.stopScanner.classList.remove('hidden');
+                    elements.scannerOutput.innerText = 'Scanning...';
+                })
+                .catch(err => {
+                    console.error('Scanner Start Failed:', err);
+                    showToast('Camera access denied. Please allow camera access.', true);
+                    elements.scannerOutput.innerText = '';
+                    html5QrCode = null;
+                });
+        });
+
+        elements.stopScanner.addEventListener('click', stopScanner);
+
+        // Patient QR Scanner
+        elements.startScannerPatient.addEventListener('click', function() {
+            console.log('Start patient QR scanner clicked');
+            if (patientQrCode) return;
+            if (window.location.hostname !== 'localhost') {
+                showToast('QR scanning requires localhost or HTTPS. Please run on http://localhost:5500.', true);
+                return;
+            }
+            patientQrCode = new Html5Qrcode('patientQrVideo');
+            const qrCodeSuccessCallback = (decodedText) => {
+                console.log('Patient QR code scanned:', decodedText);
+                let patientId = decodedText.match(/^GHLK\d{4}$/) ? decodedText : decodedText.split('/').pop();
+                elements.patientScannerOutput.innerText = `Successfully scanned: ${patientId}`;
+                stopPatientScanner();
+                checkPatientId(patientId, false);
+            };
+            const qrCodeErrorCallback = () => {
+                elements.patientScannerOutput.innerText = '';
+            };
+            const config = { fps: 10, qrbox: { width: 250, height: 250 } };
+            patientQrCode.start({ facingMode: 'environment' }, config, qrCodeSuccessCallback, qrCodeErrorCallback)
+                .then(() => {
+                    elements.startScannerPatient.classList.add('hidden');
+                    elements.stopScannerPatient.classList.remove('hidden');
+                    elements.patientScannerOutput.innerText = 'Scanning...';
+                })
+                .catch(err => {
+                    console.error('Patient Scanner Start Failed:', err);
+                    showToast('Camera access denied. Please allow camera access.', true);
+                    elements.patientScannerOutput.innerText = '';
+                    patientQrCode = null;
+                });
+        });
+
+        elements.stopScannerPatient.addEventListener('click', stopPatientScanner);
+
         // Toggle Login Section
         elements.loginButton.addEventListener('click', () => {
-            elements.loginSection.classList.toggle('hidden');
+            console.log('Login button clicked');
+            elements.loginSection.classList.remove('hidden');
             elements.patientQrSection.classList.add('hidden');
             elements.staffDashboard.classList.add('hidden');
             elements.publicSection.classList.remove('hidden');
@@ -541,7 +729,8 @@
 
         // Toggle Patient QR Section
         elements.patientQrButton.addEventListener('click', () => {
-            elements.patientQrSection.classList.toggle('hidden');
+            console.log('Patient QR button clicked');
+            elements.patientQrSection.classList.remove('hidden');
             elements.loginSection.classList.add('hidden');
             elements.staffDashboard.classList.add('hidden');
             elements.publicSection.classList.remove('hidden');
@@ -553,42 +742,38 @@
             e.preventDefault();
             const username = sanitize(document.getElementById('username').value.trim());
             const password = document.getElementById('password').value.trim();
-            console.log('Login attempt:', { username, password }); // Debug
+            console.log('Login attempt:', { username });
             const isValid = staffCredentials.some(cred => cred.username === username && cred.passwordHash === password);
-            console.log('Is valid:', isValid); // Debug
             if (isValid) {
                 try {
-                    console.log('Toggling sections'); // Debug
-                    if (!elements.staffDashboard || !elements.publicSection) {
-                        console.error('DOM elements missing:', { staffDashboard: !!elements.staffDashboard, publicSection: !!elements.publicSection });
-                        showToast('UI error: Dashboard elements not found.', true);
-                        return;
-                    }
+                    console.log('Toggling to staff dashboard');
                     elements.loginSection.classList.add('hidden');
                     elements.patientQrSection.classList.add('hidden');
                     elements.staffDashboard.classList.remove('hidden');
                     elements.publicSection.classList.add('hidden');
                     await Promise.all([
-                        loadPatients().catch(err => console.error('loadPatients error:', err)),
-                        loadAttendance().catch(err => console.error('loadAttendance error:', err)),
-                        loadReviews().catch(err => console.error('loadReviews error:', err)),
-                        loadChart().catch(err => console.error('loadChart error:', err))
+                        loadPatients(),
+                        loadAttendance(),
+                        loadReviews(),
+                        loadChart()
                     ]);
-                    console.log('Data loaded successfully'); // Debug
+                    console.log('Data loaded successfully');
                     showToast('Logged in successfully!');
                 } catch (err) {
                     console.error('Login process error:', err);
-                    showToast('Logged in, but failed to load data.', true);
-                    elements.staffDashboard.classList.remove('hidden'); // Ensure dashboard shows
+                    showToast('Logged in, but failed to load data: ' + err.message, true);
+                    elements.staffDashboard.classList.remove('hidden');
                     elements.publicSection.classList.add('hidden');
                 }
             } else {
                 document.getElementById('loginError').classList.remove('hidden');
+                console.log('Invalid credentials');
             }
         });
 
         // Logout Handling
         document.getElementById('logoutButton').addEventListener('click', function() {
+            console.log('Logout button clicked');
             elements.staffDashboard.classList.add('hidden');
             elements.loginSection.classList.add('hidden');
             elements.patientQrSection.classList.add('hidden');
@@ -599,6 +784,7 @@
 
         // Show Registration Form
         elements.showRegisterForm.addEventListener('click', function() {
+            console.log('Show register form clicked');
             elements.registerSection.classList.remove('hidden');
             elements.idCardSection.classList.add('hidden');
             this.parentElement.classList.add('hidden');
@@ -619,7 +805,7 @@
                 const surgery = sanitize(document.getElementById('surgery').value.trim());
                 const paralysisStatus = document.getElementById('paralysisStatus').value;
                 const otherDetails = sanitize(document.getElementById('otherDetails').value.trim());
-                const joiningDate = document.getElementById('joiningDate').value;
+                const joiningDate = document.getElementById('joiningDate').value || new Date().toISOString().split('T')[0];
 
                 let valid = true;
                 if (!name.match(/^[A-Za-z\s]+$/)) {
@@ -634,7 +820,7 @@
                     showFormError('age', 'ageError');
                     valid = false;
                 }
-                if (!phone.match(/^[\d\s\-\+]+$/)) {
+                if (!phone.match(/^[0-9\s\-\+\(\)]+$/)) {
                     showFormError('phone', 'phoneError');
                     valid = false;
                 }
@@ -652,7 +838,7 @@
                 }
 
                 if (!valid) {
-                    alert('Please correct the highlighted fields.');
+                    showToast('Please correct the highlighted fields.', true);
                     return;
                 }
 
@@ -662,11 +848,12 @@
                     age,
                     phone,
                     healthIssues,
-                    surgery,
+                    surgery: surgery || 'None',
                     paralysisStatus,
-                    otherDetails,
+                    otherDetails: otherDetails || 'None',
                     joiningDate
                 };
+                console.log('Submitting patient:', patient);
                 const result = await apiRequest('addPatient', patient);
                 patient.id = result.id;
                 patient.healthStatus = 'Stable';
@@ -677,17 +864,20 @@
                 generateIdCard(patient);
                 initIdCardButtons(patient);
             } catch (err) {
+                console.error('Registration error:', err);
                 showToast('Registration failed: ' + err.message, true);
             }
         });
 
         // Edit Patient Details
         elements.editDetailsButton.addEventListener('click', function() {
+            console.log('Edit details button clicked');
             elements.editPatientSection.classList.remove('hidden');
             elements.attendanceForm.classList.add('hidden');
         });
 
         elements.cancelEdit.addEventListener('click', function() {
+            console.log('Cancel edit clicked');
             elements.editPatientSection.classList.add('hidden');
             elements.attendanceForm.classList.remove('hidden');
             clearFormErrors('editPatientForm');
@@ -723,7 +913,7 @@
                     showFormError('editAge', 'editAgeError');
                     valid = false;
                 }
-                if (!phone.match(/^[\d\s\-\+]+$/)) {
+                if (!phone.match(/^[0-9\s\-\+\(\)]+$/)) {
                     showFormError('editPhone', 'editPhoneError');
                     valid = false;
                 }
@@ -741,7 +931,7 @@
                 }
 
                 if (!valid) {
-                    alert('Please correct the highlighted fields.');
+                    showToast('Please correct the highlighted fields.', true);
                     return;
                 }
 
@@ -752,158 +942,28 @@
                     age,
                     phone,
                     healthIssues,
-                    surgery,
+                    surgery: surgery || 'None',
                     paralysisStatus,
-                    otherDetails,
+                    otherDetails: otherDetails || 'None',
                     joiningDate,
                     healthStatus
                 };
+                console.log('Submitting edited patient:', patient);
                 await apiRequest('editPatient', patient);
                 await loadPatients();
                 elements.editPatientSection.classList.add('hidden');
                 elements.attendanceForm.classList.remove('hidden');
                 showToast(`Patient ${id} updated successfully!`);
-                await checkPatientId(id);
+                await checkPatientId(id, true);
             } catch (err) {
+                console.error('Update error:', err);
                 showToast('Update failed: ' + err.message, true);
             }
         });
 
-        // Staff QR Scanner
-        let html5QrCode = null;
-        document.getElementById('startScanner').addEventListener('click', async function() {
-            if (html5QrCode) return;
-            if (!window.location.protocol.includes('https') && window.location.hostname !== 'localhost') {
-                showToast('QR scanning requires HTTPS or localhost.', true);
-                return;
-            }
-            const hasPermission = await checkCameraPermission();
-            if (!hasPermission) {
-                showToast('Camera access denied. Please enable camera permissions in browser settings.', true);
-                return;
-            }
-            try {
-                html5QrCode = new Html5Qrcode('qrVideo');
-                const qrCodeSuccessCallback = (decodedText) => {
-                    let patientId = decodedText.match(/^GHLK\d{4}$/) ? decodedText : decodedText.split('/').pop();
-                    if (!patientId.match(/^GHLK\d{4}$/)) {
-                        elements.scannerOutput.innerText = 'Invalid QR code format.';
-                        return;
-                    }
-                    elements.scannerOutput.innerText = `Successfully scanned: ${patientId}`;
-                    stopScanner();
-                    document.getElementById('patientId').value = patientId;
-                    checkPatientId(patientId);
-                };
-                const qrCodeErrorCallback = () => {
-                    elements.scannerOutput.innerText = '';
-                };
-                const config = { fps: 10, qrbox: { width: 250, height: 250 }, aspectRatio: 1 };
-                await html5QrCode.start({ facingMode: 'environment' }, config, qrCodeSuccessCallback, qrCodeErrorCallback);
-                document.getElementById('startScanner').classList.add('hidden');
-                document.getElementById('stopScanner').classList.remove('hidden');
-                elements.scannerOutput.innerText = 'Scanning...';
-            } catch (err) {
-                console.error('Scanner Start Failed:', err);
-                showToast('Failed to access camera. Check permissions.', true);
-                elements.scannerOutput.innerText = '';
-                html5QrCode = null;
-            }
-        });
-
-        // Stop Staff Scanner
-        document.getElementById('stopScanner').addEventListener('click', stopScanner);
-
-        function stopScanner() {
-            if (html5QrCode) {
-                html5QrCode.stop()
-                    .then(() => {
-                        document.getElementById('startScanner').classList.remove('hidden');
-                        document.getElementById('stopScanner').classList.add('hidden');
-                        elements.scannerOutput.innerText = '';
-                        html5QrCode.clear();
-                        html5QrCode = null;
-                    })
-                    .catch(err => console.error('Stop Scanner:', err));
-            }
-        }
-
-        // Patient QR Scanner
-        let patientQrCode = null;
-        document.getElementById('startPatientScanner').addEventListener('click', async function() {
-            if (patientQrCode) return;
-            if (!window.location.protocol.includes('https') && window.location.hostname !== 'localhost') {
-                showToast('QR scanning requires HTTPS or localhost.', true);
-                return;
-            }
-            const hasPermission = await checkCameraPermission();
-            if (!hasPermission) {
-                showToast('Camera access denied. Please enable camera permissions in browser settings.', true);
-                return;
-            }
-            try {
-                patientQrCode = new Html5Qrcode('patientQrVideo');
-                const qrCodeSuccessCallback = async (decodedText) => {
-                    let patientId = decodedText.match(/^GHLK\d{4}$/) ? decodedText : decodedText.split('/').pop();
-                    if (!patientId.match(/^GHLK\d{4}$/)) {
-                        elements.patientScannerOutput.innerText = 'Invalid QR code format.';
-                        return;
-                    }
-                    elements.patientScannerOutput.innerText = `Successfully scanned: ${patientId}`;
-                    stopPatientScanner();
-                    try {
-                        const result = await apiRequest('getPatients');
-                        const patient = result.data.find(p => p.id === patientId);
-                        document.getElementById('patientInfo').classList.add('hidden');
-                        if (patient) {
-                            document.getElementById('patientInfoDetails').innerHTML = `
-                                <p><strong>ID:</strong> ${sanitize(patient.id)}</p>
-                                <p><strong>Name:</strong> ${sanitize(patient.name)}</p>
-                                <p><strong>Joining Date:</strong> ${sanitize(patient.joiningDate)}</p>
-                            `;
-                            document.getElementById('patientInfo').classList.remove('hidden');
-                        } else {
-                            elements.patientScannerOutput.innerText = 'No patient found for this ID.';
-                        }
-                    } catch (err) {
-                        showToast('Failed to fetch patient data.', true);
-                    }
-                };
-                const qrCodeErrorCallback = () => {
-                    elements.patientScannerOutput.innerText = '';
-                };
-                const config = { fps: 10, qrbox: { width: 250, height: 250 }, aspectRatio: 1 };
-                await patientQrCode.start({ facingMode: 'environment' }, config, qrCodeSuccessCallback, qrCodeErrorCallback);
-                document.getElementById('startPatientScanner').classList.add('hidden');
-                document.getElementById('stopPatientScanner').classList.remove('hidden');
-                elements.patientScannerOutput.innerText = 'Scanning...';
-            } catch (err) {
-                console.error('Patient Scanner Start Failed:', err);
-                showToast('Failed to access camera. Check permissions.', true);
-                elements.patientScannerOutput.innerText = '';
-                patientQrCode = null;
-            }
-        });
-
-        // Stop Patient Scanner
-        document.getElementById('stopPatientScanner').addEventListener('click', stopPatientScanner);
-
-        function stopPatientScanner() {
-            if (patientQrCode) {
-                patientQrCode.stop()
-                    .then(() => {
-                        document.getElementById('startPatientScanner').classList.remove('hidden');
-                        document.getElementById('stopPatientScanner').classList.add('hidden');
-                        elements.patientScannerOutput.innerText = '';
-                        patientQrCode.clear();
-                        patientQrCode = null;
-                    })
-                    .catch(err => console.error('Stop Patient Scanner:', err));
-            }
-        }
-
-        // Check Patient ID (Staff)
+        // Check Patient ID (Manual)
         document.getElementById('checkId').addEventListener('click', async function() {
+            console.log('Check ID button clicked');
             const patientId = sanitize(document.getElementById('patientId').value.trim());
             clearFormErrors('patientId');
             if (!patientId.match(/^GHLK\d{4}$/)) {
@@ -911,70 +971,13 @@
                 showToast('Invalid Patient ID format (e.g., GHLK0001).', true);
                 return;
             }
-            await checkPatientId(patientId);
+            await checkPatientId(patientId, true);
         });
 
-        async function checkPatientId(patientId) {
-            if (!patientId.match(/^GHLK\d{4}$/)) {
-                elements.scannerOutput.innerText = 'Invalid Patient ID format.';
-                return;
-            }
-            try {
-                const result = await apiRequest('getPatients');
-                const patient = result.data.find(p => p.id === patientId);
-                document.getElementById('noDetails').classList.add('hidden');
-                document.getElementById('patientDetailsSection').classList.add('hidden');
-                elements.editPatientSection.classList.add('hidden');
-                elements.attendanceForm.classList.remove('hidden');
-                if (patient) {
-                    document.getElementById('patientDetails').innerHTML = `
-                        <p><strong>ID:</strong> ${sanitize(patient.id)}</p>
-                        <p><strong>Name:</strong> ${sanitize(patient.name)}</p>
-                        <p><strong>Address:</strong> ${sanitize(patient.address)}</p>
-                        <p><strong>Age:</strong> ${sanitize(patient.age.toString())}</p>
-                        <p><strong>Phone:</strong> ${sanitize(patient.phone)}</p>
-                        <p><strong>Health Issues:</strong> ${sanitize(patient.healthIssues)}</p>
-                        <p><strong>Surgery History:</strong> ${sanitize(patient.surgery)}</p>
-                        <p><strong>Paralysis Status:</strong> ${sanitize(patient.paralysisStatus)}</p>
-                        <p><strong>Other Details:</strong> ${sanitize(patient.otherDetails)}</p>
-                        <p><strong>Joining Date:</strong> ${sanitize(patient.joiningDate)}</p>
-                        <p><strong>Health Status:</strong> ${sanitize(patient.healthStatus)}</p>
-                    `;
-                    document.getElementById('editId').value = patient.id;
-                    document.getElementById('editName').value = patient.name;
-                    document.getElementById('editAddress').value = patient.address;
-                    document.getElementById('editAge').value = patient.age;
-                    document.getElementById('editPhone').value = patient.phone;
-                    document.getElementById('editHealthIssues').value = patient.healthIssues;
-                    document.getElementById('editSurgery').value = patient.surgery;
-                    document.getElementById('editParalysisStatus').value = patient.paralysisStatus;
-                    document.getElementById('editOtherDetails').value = patient.otherDetails;
-                    document.getElementById('editJoiningDate').value = patient.joiningDate.split('/').reverse().join('-');
-                    const attendanceResult = await apiRequest('getAttendance');
-                    const patientRecords = attendanceResult.data.filter(r => r.patientId === patientId);
-                    const tbody = document.querySelector('#patientAttendanceTable tbody');
-                    tbody.innerHTML = '';
-                    patientRecords.forEach(r => {
-                        const row = `<tr>
-                            <td>${sanitize(r.date)}</td>
-                            <td>${sanitize(r.bedNumber || '-')}</td>
-                            <td>${sanitize(r.healthStatus)}</td>
-                        </tr>`;
-                        tbody.innerHTML += row;
-                    });
-                    document.getElementById('patientDetailsSection').classList.remove('hidden');
-                    document.getElementById('patientId').value = '';
-                } else {
-                    document.getElementById('noDetails').classList.remove('hidden');
-                }
-            } catch (err) {
-                showToast('Failed to fetch patient data.', true);
-            }
-        }
-
         // Attendance & Bed Management
-        document.getElementById('attendanceForm').addEventListener('submit', async function(e) {
+        elements.attendanceForm.addEventListener('submit', async function(e) {
             e.preventDefault();
+            console.log('Attendance form submitted');
             const patientId = sanitize(document.getElementById('patientId').value.trim());
             if (!patientId.match(/^GHLK\d{4}$/)) {
                 showToast('Invalid Patient ID format (e.g., GHLK0001).', true);
@@ -985,22 +988,23 @@
             try {
                 await apiRequest('addAttendance', { patientId, bedNumber, healthStatus });
                 await Promise.all([loadPatients(), loadAttendance(), loadChart()]);
-                await checkPatientId(patientId);
+                await checkPatientId(patientId, true);
                 this.reset();
                 showToast('Attendance marked successfully!');
             } catch (err) {
+                console.error('Attendance error:', err);
                 showToast('Failed to mark attendance: ' + err.message, true);
             }
         });
 
         // Review Submission
-        document.getElementById('reviewForm').addEventListener('submit', async function(e) {
+        elements.reviewForm.addEventListener('submit', async function(e) {
             e.preventDefault();
             clearFormErrors('reviewForm');
             const name = sanitize(document.getElementById('reviewName').value.trim());
             const text = sanitize(document.getElementById('reviewText').value.trim());
             let valid = true;
-            if (!name.match(/^[A-Za-z\s]+$/)) {
+            if (!name.match(/^[A-Za-z\s\.\-]+$/)) {
                 showFormError('reviewName', 'reviewNameError');
                 valid = false;
             }
@@ -1013,109 +1017,25 @@
                 return;
             }
             try {
+                console.log('Submitting review:', { name, text });
                 await apiRequest('addReview', { name, text });
                 await loadReviews();
                 this.reset();
                 showToast('Review submitted successfully!');
             } catch (err) {
-                showToast('Failed to submit review: ' + err.message, true);
+                console.error('Review submission error:', err);
+                showToast('Review submission failed: ' + err.message, true);
             }
         });
 
-        // Data Import (JSON to Sheets)
-        document.getElementById('dataUpload').addEventListener('change', async function(e) {
-            const file = e.target.files[0];
-            if (file && file.type === 'application/json') {
-                const reader = new FileReader();
-                reader.onload = async function(e) {
-                    try {
-                        const data = JSON.parse(e.target.result);
-                        if (!data.patients || !Array.isArray(data.patients) ||
-                            !data.attendanceRecords || !Array.isArray(data.attendanceRecords) ||
-                            !data.reviews || !Array.isArray(data.reviews)) {
-                            throw new Error('Invalid data structure');
-                        }
-                        for (const patient of data.patients) {
-                            await apiRequest('addPatient', {
-                                name: sanitize(patient.name),
-                                address: sanitize(patient.address),
-                                age: patient.age,
-                                phone: sanitize(patient.phone),
-                                healthIssues: sanitize(patient.healthIssues),
-                                surgery: sanitize(patient.surgery),
-                                paralysisStatus: patient.paralysisStatus,
-                                otherDetails: sanitize(patient.otherDetails),
-                                joiningDate: patient.joiningDate
-                            });
-                        }
-                        for (const record of data.attendanceRecords) {
-                            await apiRequest('addAttendance', {
-                                patientId: record.patientId,
-                                bedNumber: record.bedNumber,
-                                healthStatus: record.healthStatus
-                            });
-                        }
-                        for (const review of data.reviews) {
-                            await apiRequest('addReview', {
-                                name: sanitize(review.name),
-                                text: sanitize(review.text)
-                            });
-                        }
-                        await Promise.all([loadPatients(), loadAttendance(), loadReviews(), loadChart()]);
-                        showToast('Data imported successfully!');
-                    } catch (err) {
-                        console.error('JSON Parse Error:', err);
-                        showToast('Invalid JSON file or import error.', true);
-                    }
-                };
-                reader.readAsText(file);
-            } else {
-                showToast('Please upload a valid JSON file.', true);
-            }
-        });
-
-        // Data Export
-        document.getElementById('saveData').addEventListener('click', async function() {
-            try {
-                const [patientsResult, attendanceResult, reviewsResult] = await Promise.all([
-                    apiRequest('getPatients'),
-                    apiRequest('getAttendance'),
-                    apiRequest('getReviews')
-                ]);
-                const data = {
-                    patients: patientsResult.data,
-                    attendanceRecords: attendanceResult.data,
-                    reviews: reviewsResult.data,
-                    lastPatientId: Math.max(...patientsResult.data.map(p => parseInt(p.id.replace('GHLK', ''))) || 0)
-                };
-                const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-                const url = window.URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = 'ghlk_data.json';
-                a.click();
-                window.URL.revokeObjectURL(url);
-                showToast('Data exported successfully!');
-            } catch (err) {
-                showToast('Error exporting data: ' + err.message, true);
-            }
-        });
-
-        // Load Patients with Sorting
-        let sortConfig = { key: 'id', direction: 'asc' };
+        // Load Patients
         async function loadPatients() {
-            const tbody = document.querySelector('#patientTable tbody');
-            if (!tbody) return;
             try {
+                console.log('Loading patients');
                 const result = await apiRequest('getPatients');
-                const sortedPatients = [...result.data].sort((a, b) => {
-                    const valA = a[sortConfig.key];
-                    const valB = b[sortConfig.key];
-                    const modifier = sortConfig.direction === 'asc' ? 1 : -1;
-                    return typeof valA === 'string' ? valA.localeCompare(valB) * modifier : (valA - valB) * modifier;
-                });
+                const tbody = document.querySelector('#patientTable tbody');
                 tbody.innerHTML = '';
-                sortedPatients.forEach(p => {
+                result.data.forEach(p => {
                     const row = `<tr>
                         <td>${sanitize(p.id)}</td>
                         <td>${sanitize(p.name)}</td>
@@ -1131,32 +1051,19 @@
                     </tr>`;
                     tbody.innerHTML += row;
                 });
+                console.log('Patients loaded');
             } catch (err) {
-                showToast('Failed to load patients.', true);
+                console.error('Load patients error:', err);
+                showToast('Failed to load patients: ' + err.message, true);
             }
         }
 
-        // Table Sorting
-        document.querySelectorAll('#patientTable th[data-sort]').forEach(th => {
-            th.addEventListener('click', () => {
-                const key = th.getAttribute('data-sort');
-                if (sortConfig.key === key) {
-                    sortConfig.direction = sortConfig.direction === 'asc' ? 'desc' : 'asc';
-                } else {
-                    sortConfig.key = key;
-                    sortConfig.direction = 'asc';
-                }
-                loadPatients();
-            });
-        });
-
         // Load Attendance
         async function loadAttendance() {
-            const tbody = document.querySelector('#attendanceTable tbody');
-            if (!tbody) return;
             try {
+                console.log('Loading attendance');
                 const result = await apiRequest('getAttendance');
-                result.data.sort((a, b) => new Date(b.date) - new Date(a.date));
+                const tbody = document.querySelector('#attendanceTable tbody');
                 tbody.innerHTML = '';
                 result.data.forEach(r => {
                     const row = `<tr>
@@ -1168,67 +1075,94 @@
                     </tr>`;
                     tbody.innerHTML += row;
                 });
+                console.log('Attendance loaded');
             } catch (err) {
-                showToast('Failed to load attendance.', true);
+                console.error('Load attendance error:', err);
+                showToast('Failed to load attendance: ' + err.message, true);
             }
         }
 
         // Load Reviews
         async function loadReviews() {
-            const reviewList = document.getElementById('reviewList');
-            if (!reviewList) return;
             try {
+                console.log('Loading reviews');
                 const result = await apiRequest('getReviews');
+                const reviewList = document.getElementById('reviewList');
                 reviewList.innerHTML = '';
                 result.data.forEach(r => {
-                    const div = `<div class="border-b py-2">
-                        <p class="font-semibold">${sanitize(r.name)} - ${sanitize(r.date)}</p>
-                        <p class="text-gray-700">${sanitize(r.text)}</p>
-                    </div>`;
-                    reviewList.innerHTML += div;
+                    const div = document.createElement('div');
+                    div.className = 'bg-gray-100 p-4 rounded-md';
+                    div.innerHTML = `
+                        <p class="font-semibold">${sanitize(r.name)}</p>
+                        <p class="text-gray-600">${sanitize(r.text)}</p>
+                        <p class="text-sm text-gray-500">${sanitize(r.date)}</p>
+                    `;
+                    reviewList.appendChild(div);
                 });
+                console.log('Reviews loaded');
             } catch (err) {
-                console.error('loadReviews error:', err);
-                showToast('Failed to load reviews.', true);
+                console.error('Load reviews error:', err);
+                showToast('Failed to load reviews: ' + err.message, true);
             }
         }
 
-        // Load Health Status Chart
+        // Load Chart
+        let statusChart = null;
         async function loadChart() {
-            const ctx = document.getElementById('statusChart')?.getContext('2d');
-            if (!ctx) return;
             try {
+                console.log('Loading chart');
                 const result = await apiRequest('getAttendance');
-                const statuses = ['Stable', 'Improving', 'Critical'];
-                const counts = statuses.map(status => result.data.filter(r => r.healthStatus === status).length);
-                if (window.statusChart) window.statusChart.destroy();
-                window.statusChart = new Chart(ctx, {
+                const statusCounts = { Stable: 0, Improving: 0, Critical: 0 };
+                result.data.forEach(r => statusCounts[r.healthStatus]++);
+                const ctx = document.getElementById('statusChart').getContext('2d');
+                if (statusChart) statusChart.destroy();
+                statusChart = new Chart(ctx, {
                     type: 'bar',
                     data: {
-                        labels: statuses,
+                        labels: ['Stable', 'Improving', 'Critical'],
                         datasets: [{
-                            label: 'Health Status Count',
-                            data: counts,
+                            label: 'Patient Status',
+                            data: [statusCounts.Stable, statusCounts.Improving, statusCounts.Critical],
                             backgroundColor: ['#4CAF50', '#2196F3', '#F44336']
                         }]
                     },
-                    options: { scales: { y: { beginAtZero: true } } }
+                    options: {
+                        responsive: true,
+                        plugins: { legend: { display: false } },
+                        scales: { y: { beginAtZero: true, title: { display: true, text: 'Count' } } }
+                    }
                 });
+                console.log('Chart loaded');
             } catch (err) {
-                console.error('Chart Error:', err);
-                showToast('Failed to load chart.', true);
+                console.error('Load chart error:', err);
+                showToast('Failed to load chart: ' + err.message, true);
             }
         }
 
-        // Initialize
+        // Test API Button
+        elements.testApi.addEventListener('click', async () => {
+            try {
+                console.log('Testing API...');
+                const result = await apiRequest('getReviews');
+                console.log('Test API result:', result);
+                showToast('API test successful!');
+            } catch (err) {
+                console.error('Test API error:', err);
+                showToast('API test failed: ' + err.message, true);
+            }
+        });
+
+        // Initialize App
         async function initialize() {
+            console.log('Initializing app');
             try {
                 await loadReviews();
+                console.log('Reviews loaded on startup');
             } catch (err) {
-                console.error('Initial loadReviews failed:', err);
-                showToast('Failed to load reviews on startup.', true);
+                console.error('Initialization error:', err);
             }
         }
+
         initialize();
     </script>
 </body>
