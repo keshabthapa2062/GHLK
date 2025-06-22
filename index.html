@@ -8,9 +8,9 @@
         script-src 'self' https://cdn.tailwindcss.com https://cdn.jsdelivr.net https://unpkg.com https://cdnjs.cloudflare.com 'nonce-ghlk';
         style-src 'self' https://fonts.googleapis.com 'unsafe-inline';
         font-src https://fonts.gstatic.com;
-        img-src 'self' data:;
+        img-src 'self' data: https://via.placeholder.com;
         media-src 'self';
-        connect-src 'self';
+        connect-src 'self' https://script.google.com https://accounts.google.com;
         frame-src 'none';
         object-src 'none';
         base-uri 'self';
@@ -32,8 +32,8 @@
         th:hover { background-color: #d1d5db; }
         canvas { max-width: 100%; height: auto; }
         .hidden { display: none; }
-        #qrVideo { width: 100%; max-width: 300px; margin: 1rem auto; }
-        #scannerOutput { margin-top: 10px; font-weight: bold; text-align: center; color: #4CAF50; }
+        #qrVideo, #patientQrVideo { width: 100%; max-width: 300px; margin: 1rem auto; }
+        #scannerOutput, #patientScannerOutput { margin-top: 10px; font-weight: bold; text-align: center; color: #4CAF50; }
         .error { color: #F44336; }
         input:invalid:focus, select:invalid:focus, textarea:invalid:focus { border-color: #F44336; }
         button:hover { transition: background-color 0.2s ease; }
@@ -50,13 +50,35 @@
         .details b { width: 100px; }
         .qr-section { margin-left: 10px; }
         .qr-section canvas { width: 80px; height: 80px; }
+        .navbar { background-color: #10B981; padding: 1rem; }
+        .navbar-container { max-width: 1200px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+        .navbar-logo { display: flex; align-items: center; }
+        .navbar-logo img { height: 40px; margin-right: 1rem; }
+        .navbar-logo h1 { color: white; font-size: 1.5rem; margin: 0; }
+        .navbar-buttons { display: flex; gap: 1rem; }
+        @media (max-width: 640px) {
+            .navbar-container { flex-direction: column; align-items: flex-start; }
+            .navbar-buttons { margin-top: 1rem; }
+            #qrVideo, #patientQrVideo { max-width: 100%; }
+        }
     </style>
 </head>
 <body>
-    <div class="container mx-auto px-4 py-8">
-        <h1 class="text-3xl font-bold text-center text-green-600 mb-6">GHLK Patient Management System</h1>
+    <nav class="navbar">
+        <div class="navbar-container">
+            <div class="navbar-logo">
+                <img src="https://via.placeholder.com/40x40.png?text=GHLK" alt="GHLK Logo">
+                <h1>GHLK Patient Management System</h1>
+            </div>
+            <div class="navbar-buttons">
+                <button id="loginButton" class="bg-white text-green-600 font-semibold py-2 px-4 rounded-md hover:bg-gray-100" aria-label="Staff Login">Login</button>
+                <button id="patientQrButton" class="bg-white text-green-600 font-semibold py-2 px-4 rounded-md hover:bg-gray-100" aria-label="Scan QR Code">Scan QR</button>
+            </div>
+        </div>
+    </nav>
 
-        <div id="loginSection" class="bg-white p-6 rounded-lg shadow-md mb-8">
+    <div class="container mx-auto px-4 py-8">
+        <div id="loginSection" class="bg-white p-6 rounded-lg shadow-md mb-8 hidden">
             <h2 class="text-xl font-semibold mb-4 text-gray-800">Staff Login</h2>
             <form id="loginForm" class="space-y-4">
                 <div>
@@ -70,6 +92,20 @@
                 <button type="submit" class="w-full bg-green-600 text-white font-semibold py-2 px-4 rounded-md hover:bg-green-700" aria-label="Login">Login</button>
             </form>
             <p id="loginError" class="text-red-500 mt-2 hidden">Invalid username or password</p>
+        </div>
+
+        <div id="patientQrSection" class="bg-white p-6 rounded-lg shadow-md mb-8 hidden">
+            <h2 class="text-xl font-semibold mb-4 text-gray-800">Scan Your Patient ID</h2>
+            <div id="patientQrVideo" class="mx-auto"></div>
+            <div id="patientScannerOutput"></div>
+            <div class="flex justify-center space-x-4 mb-4">
+                <button id="startPatientScanner" class="bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700" aria-label="Start QR scanner">Start QR Scanner</button>
+                <button id="stopPatientScanner" class="bg-red-600 text-white py-2 px-4 rounded-md hover:bg-red-700 hidden" aria-label="Stop QR scanner">Stop QR Scanner</button>
+            </div>
+            <div id="patientInfo" class="mt-4 hidden">
+                <h3 class="text-lg font-semibold mb-2">Patient Information</h3>
+                <div id="patientInfoDetails" class="text-gray-700"></div>
+            </div>
         </div>
 
         <div id="staffDashboard" class="hidden">
@@ -115,6 +151,11 @@
                             <label for="phone" class="block text-sm font-medium text-gray-700">Phone Number</label>
                             <input type="tel" id="phone" required class="mt-1 block w-full border border-gray-300 rounded-md p-2 focus:ring-green-500 focus:border-green-500" pattern="[\d\s\-\+]+" aria-label="Patient phone number">
                             <p id="phoneError" class="field-error">Numbers, spaces, +, or - only</p>
+                        </div>
+                        <div>
+                            <label for="joiningDate" class="block text-sm font-medium text-gray-700">Joining Date</label>
+                            <input type="date" id="joiningDate" required class="mt-1 block w-full border border-gray-300 rounded-md p-2 focus:ring-green-500 focus:border-green-500" aria-label="Joining date">
+                            <p id="joiningDateError" class="field-error">Valid date required (not in future)</p>
                         </div>
                     </div>
                     <div>
@@ -217,6 +258,7 @@
                                 <th>Paralysis Status</th>
                                 <th>Surgery</th>
                                 <th>Other Details</th>
+                                <th>Joining Date</th>
                                 <th>Bed</th>
                                 <th>Status</th>
                             </tr>
@@ -273,19 +315,14 @@
     </div>
 
     <script nonce="ghlk">
+        // Replace with your Google Apps Script Web App URL
+        const API_URL = 'YOUR_APPS_SCRIPT_WEB_APP_URL';
+
         // Mock credentials (demo only; use server-side auth in production)
         const staffCredentials = [
             { username: 'staff1', passwordHash: 'ghlk123' },
             { username: 'admin', passwordHash: 'ghlkadmin' }
         ];
-
-        // Initialize data
-        let patients = [];
-        let attendanceRecords = [];
-        let reviews = [];
-        let lastPatientId = 0;
-        let html5QrCode = null;
-        let sortConfig = { key: 'id', direction: 'asc' };
 
         // DOM elements
         const elements = {
@@ -293,10 +330,15 @@
             registerSection: document.getElementById('registerSection'),
             showRegisterForm: document.getElementById('showRegisterForm'),
             scannerOutput: document.getElementById('scannerOutput'),
+            patientScannerOutput: document.getElementById('patientScannerOutput'),
             idCardSection: document.getElementById('idCardSection'),
             idCard: document.getElementById('idCard'),
             downloadCard: document.getElementById('downloadCard'),
-            closeCard: document.getElementById('closeCard')
+            closeCard: document.getElementById('closeCard'),
+            loginButton: document.getElementById('loginButton'),
+            loginSection: document.getElementById('loginSection'),
+            patientQrSection: document.getElementById('patientQrSection'),
+            patientQrButton: document.getElementById('patientQrButton')
         };
 
         // XSS sanitization
@@ -375,20 +417,55 @@
             });
         }
 
+        // API Request Helper
+        async function apiRequest(action, data) {
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action, ...data })
+                });
+                const result = await response.json();
+                if (result.status !== 'success') {
+                    throw new Error(result.message || 'API request failed');
+                }
+                return result;
+            } catch (err) {
+                console.error('API Error:', err);
+                showToast('Error: ' + err.message);
+                throw err;
+            }
+        }
+
+        // Toggle Login Section
+        elements.loginButton.addEventListener('click', () => {
+            elements.loginSection.classList.toggle('hidden');
+            elements.patientQrSection.classList.add('hidden');
+            elements.staffDashboard.classList.add('hidden');
+            elements.publicSection.classList.remove('hidden');
+        });
+
+        // Toggle Patient QR Section
+        elements.patientQrButton.addEventListener('click', () => {
+            elements.patientQrSection.classList.toggle('hidden');
+            elements.loginSection.classList.add('hidden');
+            elements.staffDashboard.classList.add('hidden');
+            elements.publicSection.classList.remove('hidden');
+            stopPatientScanner(); // Ensure scanner is stopped when reopening
+        });
+
         // Login Handling
-        document.getElementById('loginForm').addEventListener('submit', function(e) {
+        document.getElementById('loginForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             const username = sanitize(document.getElementById('username').value.trim());
             const password = document.getElementById('password').value.trim();
             const isValid = staffCredentials.some(cred => cred.username === username && cred.passwordHash === password);
             if (isValid) {
-                document.getElementById('loginSection').classList.add('hidden');
-                document.getElementById('staffDashboard').classList.remove('hidden');
-                document.getElementById('publicSection').classList.add('hidden');
-                loadPatients();
-                loadAttendance();
-                loadReviews();
-                loadChart();
+                elements.loginSection.classList.add('hidden');
+                elements.patientQrSection.classList.add('hidden');
+                elements.staffDashboard.classList.remove('hidden');
+                elements.publicSection.classList.add('hidden');
+                await Promise.all([loadPatients(), loadAttendance(), loadReviews(), loadChart()]);
             } else {
                 document.getElementById('loginError').classList.remove('hidden');
             }
@@ -396,9 +473,10 @@
 
         // Logout Handling
         document.getElementById('logoutButton').addEventListener('click', function() {
-            document.getElementById('staffDashboard').classList.add('hidden');
-            document.getElementById('loginSection').classList.remove('hidden');
-            document.getElementById('publicSection').classList.remove('hidden');
+            elements.staffDashboard.classList.add('hidden');
+            elements.loginSection.classList.add('hidden');
+            elements.patientQrSection.classList.add('hidden');
+            elements.publicSection.classList.remove('hidden');
             document.getElementById('loginForm').reset();
             document.getElementById('loginError').classList.add('hidden');
         });
@@ -412,7 +490,7 @@
         });
 
         // Patient Registration
-        elements.patientForm.addEventListener('submit', function(e) {
+        elements.patientForm.addEventListener('submit', async function(e) {
             e.preventDefault();
             clearFormErrors('patientForm');
 
@@ -425,6 +503,7 @@
                 const surgery = sanitize(document.getElementById('surgery').value.trim());
                 const paralysisStatus = document.getElementById('paralysisStatus').value;
                 const otherDetails = sanitize(document.getElementById('otherDetails').value.trim());
+                const joiningDate = document.getElementById('joiningDate').value;
 
                 let valid = true;
                 if (!name.match(/^[A-Za-z\s]+$/)) {
@@ -451,44 +530,44 @@
                     showFormError('paralysisStatus', 'paralysisStatusError');
                     valid = false;
                 }
+                if (!joiningDate || new Date(joiningDate) > new Date()) {
+                    showFormError('joiningDate', 'joiningDateError');
+                    valid = false;
+                }
 
                 if (!valid) {
                     alert('Please correct the highlighted fields.');
                     return;
                 }
 
-                lastPatientId++;
-                const id = `GHLK${String(lastPatientId).padStart(4, '0')}`;
-                const joiningDate = new Date().toLocaleDateString();
-
                 const patient = {
-                    id,
                     name,
                     address,
                     age,
                     phone,
                     healthIssues,
-                    surgery: surgery || 'None',
+                    surgery,
                     paralysisStatus,
-                    otherDetails: otherDetails || 'None',
-                    joiningDate,
-                    bedNumber: null,
-                    healthStatus: 'Stable'
+                    otherDetails,
+                    joiningDate
                 };
-                patients.push(patient);
+                const result = await apiRequest('addPatient', patient);
+                patient.id = result.id;
+                patient.bedNumber = null;
+                patient.healthStatus = 'Stable';
 
-                loadPatients();
+                await loadPatients();
                 this.reset();
-                showToast(`Patient ${id} registered successfully!`);
+                showToast(`Patient ${patient.id} registered successfully!`);
                 generateIdCard(patient);
                 initIdCardButtons(patient);
             } catch (err) {
-                console.error('Registration Error:', err);
                 alert('An error occurred during registration. Please try again.');
             }
         });
 
-        // QR Scanner
+        // Staff QR Scanner
+        let html5QrCode = null;
         document.getElementById('startScanner').addEventListener('click', function() {
             if (html5QrCode) return;
             if (!window.location.protocol.includes('https') && window.location.hostname !== 'localhost') {
@@ -510,7 +589,7 @@
             const qrCodeErrorCallback = () => {
                 elements.scannerOutput.innerText = '';
             };
-            const config = { fps: 10, qrbox: { width: 250, height: 250 } };
+            const config = { fps: 10, qrbox: { width: 250, height: 250 }, aspectRatio: 1 };
             html5QrCode.start({ facingMode: 'environment' }, config, qrCodeSuccessCallback, qrCodeErrorCallback)
                 .then(() => {
                     document.getElementById('startScanner').classList.add('hidden');
@@ -525,7 +604,7 @@
                 });
         });
 
-        // Stop Scanner
+        // Stop Staff Scanner
         document.getElementById('stopScanner').addEventListener('click', stopScanner);
 
         function stopScanner() {
@@ -542,24 +621,91 @@
             }
         }
 
-        // Check Patient ID
-        document.getElementById('checkId').addEventListener('click', function() {
+        // Patient QR Scanner
+        let patientQrCode = null;
+        document.getElementById('startPatientScanner').addEventListener('click', function() {
+            if (patientQrCode) return;
+            if (!window.location.protocol.includes('https') && window.location.hostname !== 'localhost') {
+                alert('QR scanning requires HTTPS or localhost. Please use a secure context.');
+                return;
+            }
+            patientQrCode = new Html5Qrcode('patientQrVideo');
+            const qrCodeSuccessCallback = async (decodedText) => {
+                let patientId = decodedText.match(/^GHLK\d{4}$/) ? decodedText : decodedText.split('/').pop();
+                if (!patientId.match(/^GHLK\d{4}$/)) {
+                    elements.patientScannerOutput.innerText = 'Invalid QR code format.';
+                    return;
+                }
+                elements.patientScannerOutput.innerText = `Successfully scanned: ${patientId}`;
+                stopPatientScanner();
+                const result = await apiRequest('getPatients');
+                const patient = result.data.find(p => p.id === patientId);
+                document.getElementById('patientInfo').classList.add('hidden');
+                if (patient) {
+                    document.getElementById('patientInfoDetails').innerHTML = `
+                        <p><strong>ID:</strong> ${sanitize(patient.id)}</p>
+                        <p><strong>Name:</strong> ${sanitize(patient.name)}</p>
+                        <p><strong>Joining Date:</strong> ${sanitize(patient.joiningDate)}</p>
+                    `;
+                    document.getElementById('patientInfo').classList.remove('hidden');
+                } else {
+                    elements.patientScannerOutput.innerText = 'No patient found for this ID.';
+                }
+            };
+            const qrCodeErrorCallback = () => {
+                elements.patientScannerOutput.innerText = '';
+            };
+            const config = { fps: 10, qrbox: { width: 250, height: 250 }, aspectRatio: 1 };
+            patientQrCode.start({ facingMode: 'environment' }, config, qrCodeSuccessCallback, qrCodeErrorCallback)
+                .then(() => {
+                    document.getElementById('startPatientScanner').classList.add('hidden');
+                    document.getElementById('stopPatientScanner').classList.remove('hidden');
+                    elements.patientScannerOutput.innerText = 'Scanning...';
+                })
+                .catch(err => {
+                    console.error('Patient Scanner Start Failed:', err);
+                    alert('Failed to access camera. Please allow camera permissions.');
+                    patientQrCode = null;
+                    elements.patientScannerOutput.innerText = '';
+                });
+        });
+
+        // Stop Patient Scanner
+        document.getElementById('stopPatientScanner').addEventListener('click', stopPatientScanner);
+
+        function stopPatientScanner() {
+            if (patientQrCode) {
+                patientQrCode.stop()
+                    .then(() => {
+                        document.getElementById('startPatientScanner').classList.remove('hidden');
+                        document.getElementById('stopPatientScanner').classList.add('hidden');
+                        elements.patientScannerOutput.innerText = '';
+                        patientQrCode.clear();
+                        patientQrCode = null;
+                    })
+                    .catch(err => console.error('Stop Patient Scanner:', err));
+            }
+        }
+
+        // Check Patient ID (Staff)
+        document.getElementById('checkId').addEventListener('click', async function() {
             const patientId = sanitize(document.getElementById('patientId').value.trim());
             clearFormErrors('patientId');
-            if (!getElementById('patientId').value.match(/^GHLK\d{4}$/)) {
+            if (!patientId.match(/^GHLK\d{4}$/)) {
                 showFormError('patientId', 'patientIdError');
                 alert('Invalid Patient ID format (e.g., GHLK0001).');
                 return;
             }
-            checkPatientId(patientId);
+            await checkPatientId(patientId);
         });
 
-        function checkPatientId(patientId) {
+        async function checkPatientId(patientId) {
             if (!patientId.match(/^GHLK\d{4}$/)) {
                 elements.scannerOutput.innerText = 'Invalid Patient ID format.';
                 return;
             }
-            const patient = patients.find(p => p.id === patientId);
+            const result = await apiRequest('getPatients');
+            const patient = result.data.find(p => p.id === patientId);
             document.getElementById('noDetails').classList.add('hidden');
             document.getElementById('patientDetailsSection').classList.add('hidden');
             if (patient) {
@@ -576,7 +722,8 @@
                     <p><strong>Joining Date:</strong> ${sanitize(patient.joiningDate)}</p>
                     <p><strong>Health Status:</strong> ${sanitize(patient.healthStatus)}</p>
                 `;
-                const patientRecords = attendanceRecords.filter(r => r.patientId === patientId);
+                const attendanceResult = await apiRequest('getAttendance');
+                const patientRecords = attendanceResult.data.filter(r => r.patientId === patientId);
                 const tbody = document.querySelector('#patientAttendanceTable tbody');
                 tbody.innerHTML = '';
                 patientRecords.forEach(r => {
@@ -595,7 +742,7 @@
         }
 
         // Attendance & Bed Management
-        document.getElementById('attendanceForm').addEventListener('submit', function(e) {
+        document.getElementById('attendanceForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             const patientId = sanitize(document.getElementById('patientId').value.trim());
             if (!patientId.match(/^GHLK\d{4}$/)) {
@@ -604,29 +751,18 @@
             }
             const bedNumber = document.getElementById('bedNumber').value || null;
             const healthStatus = document.getElementById('healthStatus').value;
-            const patient = patients.find(p => p.id === patientId);
-            if (patient) {
-                patient.bedNumber = bedNumber;
-                patient.healthStatus = healthStatus;
-                attendanceRecords.push({
-                    date: new Date().toLocaleString(),
-                    patientId,
-                    name: sanitize(patient.name),
-                    bedNumber,
-                    healthStatus
-                });
-                loadPatients();
-                loadAttendance();
-                loadChart();
-                checkPatientId(patientId);
+            try {
+                await apiRequest('addAttendance', { patientId, bedNumber, healthStatus });
+                await Promise.all([loadPatients(), loadAttendance(), loadChart()]);
+                await checkPatientId(patientId);
                 this.reset();
-            } else {
-                alert('Invalid Patient ID.');
+            } catch (err) {
+                alert('Invalid Patient ID or API error.');
             }
         });
 
         // Review Submission
-        document.getElementById('reviewForm').addEventListener('submit', function(e) {
+        document.getElementById('reviewForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             clearFormErrors('reviewForm');
             const name = sanitize(document.getElementById('reviewName').value.trim());
@@ -644,58 +780,59 @@
                 alert('Please correct the highlighted fields.');
                 return;
             }
-            const review = {
-                name,
-                text,
-                date: new Date().toLocaleDateString()
-            };
-            reviews.push(review);
-            loadReviews();
-            this.reset();
+            try {
+                await apiRequest('addReview', { name, text });
+                await loadReviews();
+                this.reset();
+            } catch (err) {
+                alert('An error occurred while submitting the review.');
+            }
         });
 
-        // Data Import
-        document.getElementById('dataUpload').addEventListener('change', function(e) {
+        // Data Import (JSON to Sheets)
+        document.getElementById('dataUpload').addEventListener('change', async function(e) {
             const file = e.target.files[0];
             if (file && file.type === 'application/json') {
                 const reader = new FileReader();
-                reader.onload = function(e) {
+                reader.onload = async function(e) {
                     try {
                         const data = JSON.parse(e.target.result);
                         if (!data.patients || !Array.isArray(data.patients) ||
                             !data.attendanceRecords || !Array.isArray(data.attendanceRecords) ||
-                            !data.reviews || !Array.isArray(data.reviews) ||
-                            isNaN(data.lastPatientId) ||
-                            !data.patients.every(p => p.id.match(/^GHLK\d{4}$/))) {
-                            throw new Error('Invalid data structure or patient IDs');
+                            !data.reviews || !Array.isArray(data.reviews)) {
+                            throw new Error('Invalid data structure');
                         }
-                        patients = data.patients.map(p => ({
-                            ...p,
-                            name: sanitize(p.name),
-                            address: sanitize(p.address),
-                            phone: sanitize(p.phone),
-                            healthIssues: sanitize(p.healthIssues),
-                            surgery: sanitize(p.surgery),
-                            otherDetails: sanitize(p.otherDetails)
-                        }));
-                        attendanceRecords = data.attendanceRecords.map(r => ({
-                            ...r,
-                            name: sanitize(r.name)
-                        }));
-                        reviews = data.reviews.map(r => ({
-                            ...r,
-                            name: sanitize(r.name),
-                            text: sanitize(r.text)
-                        }));
-                        lastPatientId = data.lastPatientId || 0;
-                        loadPatients();
-                        loadAttendance();
-                        loadReviews();
-                        loadChart();
+                        for (const patient of data.patients) {
+                            await apiRequest('addPatient', {
+                                name: sanitize(patient.name),
+                                address: sanitize(patient.address),
+                                age: patient.age,
+                                phone: sanitize(patient.phone),
+                                healthIssues: sanitize(patient.healthIssues),
+                                surgery: sanitize(patient.surgery),
+                                paralysisStatus: patient.paralysisStatus,
+                                otherDetails: sanitize(patient.otherDetails),
+                                joiningDate: patient.joiningDate
+                            });
+                        }
+                        for (const record of data.attendanceRecords) {
+                            await apiRequest('addAttendance', {
+                                patientId: record.patientId,
+                                bedNumber: record.bedNumber,
+                                healthStatus: record.healthStatus
+                            });
+                        }
+                        for (const review of data.reviews) {
+                            await apiRequest('addReview', {
+                                name: sanitize(review.name),
+                                text: sanitize(review.text)
+                            });
+                        }
+                        await Promise.all([loadPatients(), loadAttendance(), loadReviews(), loadChart()]);
                         showToast('Data imported successfully!');
                     } catch (err) {
                         console.error('JSON Parse Error:', err);
-                        alert('Invalid JSON file. Ensure it contains valid patients, attendanceRecords, reviews, and lastPatientId.');
+                        alert('Invalid JSON file or import error.');
                     }
                 };
                 reader.readAsText(file);
@@ -705,28 +842,39 @@
         });
 
         // Data Export
-        document.getElementById('saveData').addEventListener('click', function() {
-            const data = {
-                patients,
-                attendanceRecords,
-                reviews,
-                lastPatientId
-            };
-            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = 'ghlk_data.json';
-            a.click();
-            window.URL.revokeObjectURL(url);
-            showToast('Data exported successfully!');
+        document.getElementById('saveData').addEventListener('click', async function() {
+            try {
+                const [patientsResult, attendanceResult, reviewsResult] = await Promise.all([
+                    apiRequest('getPatients'),
+                    apiRequest('getAttendance'),
+                    apiRequest('getReviews')
+                ]);
+                const data = {
+                    patients: patientsResult.data,
+                    attendanceRecords: attendanceResult.data,
+                    reviews: reviewsResult.data,
+                    lastPatientId: Math.max(...patientsResult.data.map(p => parseInt(p.id.replace('GHLK', ''))) || 0)
+                };
+                const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'ghlk_data.json';
+                a.click();
+                window.URL.revokeObjectURL(url);
+                showToast('Data exported successfully!');
+            } catch (err) {
+                alert('Error exporting data.');
+            }
         });
 
         // Load Patients with Sorting
-        function loadPatients() {
+        let sortConfig = { key: 'id', direction: 'asc' };
+        async function loadPatients() {
             const tbody = document.querySelector('#patientTable tbody');
             if (!tbody) return;
-            const sortedPatients = [...patients].sort((a, b) => {
+            const result = await apiRequest('getPatients');
+            const sortedPatients = [...result.data].sort((a, b) => {
                 const valA = a[sortConfig.key];
                 const valB = b[sortConfig.key];
                 const modifier = sortConfig.direction === 'asc' ? 1 : -1;
@@ -744,6 +892,7 @@
                     <td>${sanitize(p.paralysisStatus)}</td>
                     <td>${sanitize(p.surgery)}</td>
                     <td>${sanitize(p.otherDetails)}</td>
+                    <td>${sanitize(p.joiningDate)}</td>
                     <td>${sanitize(p.bedNumber || '-')}</td>
                     <td>${sanitize(p.healthStatus)}</td>
                 </tr>`;
@@ -766,12 +915,13 @@
         });
 
         // Load Attendance
-        function loadAttendance() {
+        async function loadAttendance() {
             const tbody = document.querySelector('#attendanceTable tbody');
             if (!tbody) return;
+            const result = await apiRequest('getAttendance');
+            result.data.sort((a, b) => new Date(b.date) - new Date(a.date));
             tbody.innerHTML = '';
-            attendanceRecords.sort((a, b) => new Date(b.date) - new Date(a.date));
-            attendanceRecords.forEach(r => {
+            result.data.forEach(r => {
                 const row = `<tr>
                     <td>${sanitize(r.date)}</td>
                     <td>${sanitize(r.patientId)}</td>
@@ -784,11 +934,12 @@
         }
 
         // Load Reviews
-        function loadReviews() {
+        async function loadReviews() {
             const reviewList = document.getElementById('reviewList');
             if (!reviewList) return;
+            const result = await apiRequest('getReviews');
             reviewList.innerHTML = '';
-            reviews.forEach(r => {
+            result.data.forEach(r => {
                 const div = `<div class="border-b py-2">
                     <p class="font-semibold">${sanitize(r.name)} - ${sanitize(r.date)}</p>
                     <p class="text-gray-700">${sanitize(r.text)}</p>
@@ -798,12 +949,13 @@
         }
 
         // Load Health Status Chart
-        function loadChart() {
+        async function loadChart() {
             const ctx = document.getElementById('statusChart')?.getContext('2d');
             if (!ctx) return;
             try {
+                const result = await apiRequest('getAttendance');
                 const statuses = ['Stable', 'Improving', 'Critical'];
-                const counts = statuses.map(status => attendanceRecords.filter(r => r.healthStatus === status).length);
+                const counts = statuses.map(status => result.data.filter(r => r.healthStatus === status).length);
                 if (window.statusChart) window.statusChart.destroy();
                 window.statusChart = new Chart(ctx, {
                     type: 'bar',
