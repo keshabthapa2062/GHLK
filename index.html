@@ -1,1153 +1,2039 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="Content-Security-Policy" content="
-        default-src 'self';
-        script-src 'self' https://cdn.tailwindcss.com https://cdn.jsdelivr.net https://unpkg.com https://cdnjs.cloudflare.com 'nonce-ghlk';
-        style-src 'self' https://fonts.googleapis.com 'unsafe-inline';
-        font-src https://fonts.gstatic.com;
-        img-src 'self' data: https://placehold.co https://api.qrserver.com;
-        media-src 'self';
-        connect-src 'self' https://script.google.com https://accounts.google.com;
-        frame-src 'none';
-        object-src 'none';
-        base-uri 'self';
-        form-action 'self';
-    ">
-    <title>GHLK Patient Management System</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
-    <script src="https://unpkg.com/html5-qrcode@2.3.9/minified/html5-qrcode.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
-    <style>
-        body { font-family: 'Poppins', sans-serif; background-color: #f3f4f6; }
-        .container { max-width: 1200px; margin: 0 auto; padding: 1rem; }
-        table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
-        th, td { border: 1px solid #d1d5db; padding: 0.5rem; text-align: left; }
-        th { background-color: #e5e7eb; cursor: pointer; }
-        th:hover { background-color: #d1d5db; }
-        canvas { max-width: 100%; height: auto; }
-        .hidden { display: none; }
-        #qrVideo, #patientQrVideo { width: 100%; max-width: 300px; margin: 1rem auto; }
-        #scanner-output, #patient-scanner-output { margin-top: 10px; font-weight: bold; text-align: center; color: #4CAF50; }
-        .error { color: #F44336; }
-        input:invalid:focus, select:invalid:focus, textarea:invalid:focus { border-color: #F44336; }
-        button:hover { transition: background-color 0.2s ease; }
-        .field-error { display: none; color: #F44336; font-size: 0.875rem; margin-top: 0.25rem; }
-        .table-responsive { overflow-x: auto; }
-        .toast { position: fixed; bottom: 20px; right: 20px; background-color: #4CAF50; color: white; padding: 1rem; border-radius: 0.5rem; z-index: 1000; }
-        #idCard { width: 350px; height: 220px; background: #ffffff; padding: 20px; border: 2px solid #333; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); margin: 20px auto; }
-        .company-info { text-align: center; margin-bottom: 10px; }
-        .company-info h2 { margin: 0; font-size: 18px; }
-        .company-info p { margin: 0; font-size: 12px; color: #555; }
-        .info-section { display: flex; justify-content: space-between; }
-        .details { font-size: 14px; line-height: 1.6; }
-        .details div { display: flex; }
-        .details b { width: 100px; }
-        .qr-section { margin-left: 10px; }
-        .qr-section img { width: 80px; height: 80px; }
-        .navbar { background-color: #10B981; padding: 1rem; }
-        .navbar-container { max-width: 1200px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; }
-        .navbar-logo { display: flex; align-items: center; }
-        .navbar-logo img { height: 40px; margin-right: 1rem; }
-        .navbar-logo h1 { color: white; font-size: 1.5rem; margin: 0; }
-        .navbar-buttons { display: flex; gap: 1rem; }
-        @media (max-width: 640px) {
-            .navbar-container { flex-direction: column; align-items: flex-start; }
-            .navbar-buttons { margin-top: 1rem; }
-            #qrVideo, #patientQrVideo { max-width: 100%; }
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GHLK Health Care System</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="">
+  <style>
+    /* Modern color scheme */
+    :root {
+      --primary-color: #2c3e50;
+      --secondary-color: #3498db;
+      --accent-color: #e74c3c;
+      --light-color: #ecf0f1;
+      --dark-color: #2c3e50;
+    }
+
+    /* Improved layout and spacing */
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f8f9fa;
+    }
+
+    .ghlk-navbar {
+      background-color: var(--primary-color);
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    .ghlk-navbar .navbar-brand img {
+      height: 40px;
+    }
+
+    .ghlk-navbar .nav-link {
+      color: white !important;
+      margin: 0 10px;
+      font-weight: 500;
+      transition: all 0.3s;
+    }
+
+    .ghlk-navbar .nav-link:hover {
+      color: var(--light-color) !important;
+      transform: translateY(-2px);
+    }
+
+    .login-btn {
+      background-color: var(--secondary-color);
+      border-radius: 20px;
+      padding: 5px 15px;
+      transition: all 0.3s;
+    }
+
+    .login-btn:hover {
+      background-color: #2980b9;
+      transform: translateY(-2px);
+    }
+
+    /* Hero section improvements */
+    .hero-section {
+      background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+      color: white;
+      padding: 80px 0;
+      text-align: center;
+    }
+
+    .ghlk-logo-large {
+      height: 120px;
+      margin-bottom: 20px;
+      filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.2));
+    }
+
+    /* Form container styling */
+    .form-container {
+      max-width: 800px;
+      margin: 30px auto;
+      padding: 30px;
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+      position: relative;
+    }
+
+    /* ID card styling */
+    #idCard {
+      width: 85mm;
+      border: 2px solid var(--primary-color);
+      background-color: white;
+      padding: 15px;
+      border-radius: 8px;
+      box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+      margin: 0 auto;
+    }
+
+    /* Photo preview styling */
+    #photoPreview,
+    #idCardPhoto,
+    #visitorPhoto {
+      width: 35mm;
+      height: 45mm;
+      margin-top: 10px;
+      display: none;
+      border-radius: 5px;
+      border: 1px solid #ddd;
+      object-fit: cover;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    }
+
+    /* Calendar styling */
+    .attendance-calendar {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 5px;
+      margin-top: 15px;
+    }
+
+    .calendar-day {
+      border: 1px solid #ddd;
+      padding: 5px;
+      text-align: center;
+      height: 30px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 3px;
+    }
+
+    .present {
+      background-color: #2ecc71;
+      color: white;
+    }
+
+    .absent {
+      background-color: #e74c3c;
+      color: white;
+    }
+
+    /* Button styling */
+    .btn-primary {
+      background-color: var(--secondary-color);
+      border: none;
+    }
+
+    .btn-primary:hover {
+      background-color: #2980b9;
+    }
+
+    /* Toast notifications */
+    .toast {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      min-width: 250px;
+      z-index: 1100;
+    }
+
+    /* QR Scanner Styles */
+    .scanner-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+    }
+
+    .scanner-frame {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 70%;
+      height: 40%;
+      border: 3px solid #3498db;
+      box-shadow: 0 0 0 1000px rgba(0, 0, 0, 0.5);
+    }
+
+    #qrScanner video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+      .form-container {
+        padding: 20px;
+        margin: 15px;
+      }
+
+      #idCard {
+        width: 100%;
+      }
+
+      .hero-section {
+        padding: 50px 0;
+      }
+    }
+  </style>
 </head>
+
 <body>
-    <nav class="navbar">
-        <div class="navbar-container">
-            <div class="navbar-logo">
-                <img src="https://placehold.co/40x40?text=GHLK" alt="GHLK Logo">
-                <h1>GHLK Patient Management System</h1>
-            </div>
-            <div class="navbar-buttons">
-                <button id="loginButton" class="bg-white text-green-600 font-semibold py-2 px-4 rounded-md hover:bg-gray-100" aria-label="Staff Login">Login</button>
-                <button id="patientQrButton" class="bg-white text-green-600 font-semibold py-2 px-4 rounded-md hover:bg-gray-100" aria-label="Scan QR Code">Scan QR</button>
-            </div>
+  <!-- Home Page -->
+  <div id="homePage">
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark ghlk-navbar">
+      <div class="container">
+        <a class="navbar-brand" href="#">
+          <img src="" alt="GHLK Logo">
+        </a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+          <ul class="navbar-nav ms-auto">
+            <li class="nav-item">
+              <a class="nav-link" href="#home">Home</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="#about">About</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="#contact">Contact</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link login-btn" href="#" id="homeLoginBtn">
+                <i class="fas fa-sign-in-alt"></i> Staff Login
+              </a>
+            </li>
+          </ul>
         </div>
+      </div>
     </nav>
 
-    <div class="container mx-auto px-4 py-8">
-        <div id="loginSection" class="bg-white p-6 rounded-lg shadow-md mb-8 hidden">
-            <h2 class="text-xl font-semibold mb-4 text-gray-800">Staff Login</h2>
-            <form id="loginForm" class="space-y-4">
-                <div>
-                    <label for="username" class="block text-sm font-medium text-gray-700">Username</label>
-                    <input type="text" id="username" required class="mt-1 block w-full border border-gray-300 rounded-md p-2 focus:ring-none focus:border-gray-300" aria-label="Username">
-                </div>
-                <div>
-                    <label for="password" class="block text-sm font-medium text-gray-700">Password</label>
-                    <input type="password" id="password" required class="mt-1 block w-full border border-gray-300 rounded-md p-2 focus:ring-none focus:border-gray-300" aria-label="Password">
-                </div>
-                <button type="submit" class="w-full bg-green-600 text-white font-semibold py-2 px-4 rounded-md hover:bg-green-700" aria-label="Login">Login</button>
-            </form>
-            <p id="loginError" class="text-red-500 mt-2 hidden">Invalid username or password</p>
+    <!-- Hero Section -->
+    <section class="hero-section" id="home">
+      <div class="container">
+        <img src="" alt="GHLK Logo" class="ghlk-logo-large">
+        <h1 class="display-4">GHLK Health Care Center</h1>
+        <p class="lead">Rampur-5, Palpa - Providing Quality Healthcare Since 2005</p>
+
+        <div class="d-flex justify-content-center mt-4">
+          <button class="btn btn-light btn-lg mx-2" id="homeScanBtn">
+            <i class="fas fa-qrcode"></i> Scan Patient ID
+          </button>
+          <button class="btn btn-outline-light btn-lg mx-2" id="learnMoreBtn">
+            <i class="fas fa-info-circle"></i> Learn More
+          </button>
         </div>
+      </div>
+    </section>
 
-        <div id="patientQrSection" class="bg-white p-6 rounded-lg shadow-md mb-8 hidden">
-            <h2 class="text-xl font-semibold mb-4 text-gray-800">Scan Your Patient ID</h2>
-            <div id="patientQrVideo"></div>
-            <div id="patient-scanner-output"></div>
-            <div class="flex justify-center space-x-4 mb-4">
-                <button id="startScannerPatient" class="bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700" aria-label="Start QR scanner">Start QR Scanner</button>
-                <button id="stopScannerPatient" class="bg-red-600 text-white py-2 px-4 rounded-md hover:bg-red-700 hidden" aria-label="Stop QR scanner">Stop QR Scanner</button>
-            </div>
-            <div id="patientInfo" class="mt-4 hidden">
-                <h3 class="text-lg font-semibold mb-2">Patient Information</h3>
-                <div id="patientInfoDetails" class="text-gray-700"></div>
-            </div>
+    <!-- About Section -->
+    <section class="py-5" id="about">
+      <div class="container">
+        <div class="row align-items-center">
+          <div class="col-lg-6">
+            <h2 class="display-5 mb-4">About Our Facility</h2>
+            <p class="lead">GHLK Health Care Center is committed to providing exceptional healthcare services to our
+              community.</p>
+            <p>Founded in 2005, we have grown to become a trusted healthcare provider in the Palpa region, offering a
+              wide range of medical services with state-of-the-art facilities and a team of experienced professionals.
+            </p>
+            <ul class="list-unstyled">
+              <li><i class="fas fa-check text-success me-2"></i> 24/7 Emergency Services</li>
+              <li><i class="fas fa-check text-success me-2"></i> Experienced Medical Staff</li>
+              <li><i class="fas fa-check text-success me-2"></i> Modern Diagnostic Equipment</li>
+              <li><i class="fas fa-check text-success me-2"></i> Patient-Centered Care</li>
+            </ul>
+          </div>
+          <div class="col-lg-6">
+            <img src="" alt="Our Facility"
+              class="img-fluid rounded shadow">
+          </div>
         </div>
+      </div>
+    </section>
 
-        <div id="staffDashboard" class="hidden">
-            <div class="flex justify-end mb-4">
-                <button id="logoutButton" class="bg-red-600 text-white font-semibold py-2 px-4 rounded-md hover:bg-red-700" aria-label="Logout">Logout</button>
+    <!-- Services Section -->
+    <section class="py-5 bg-light">
+      <div class="container">
+        <h2 class="text-center mb-5">Our Services</h2>
+        <div class="row g-4">
+          <div class="col-md-4">
+            <div class="card h-100 border-0 shadow-sm text-center">
+              <div class="card-body">
+                <i class="fas fa-heartbeat fa-3x text-danger mb-3"></i>
+                <h5>Cardiology</h5>
+                <p class="text-muted">Comprehensive heart care with advanced diagnostic tools and treatment options.</p>
+              </div>
             </div>
-
-            <div class="bg-white p-6 rounded-lg shadow-md mb-8">
-                <button id="showRegisterForm" class="w-full bg-green-600 text-white font-semibold py-2 px-4 rounded-md hover:bg-green-700" aria-label="Register new patient">Register New Patient</button>
+          </div>
+          <div class="col-md-4">
+            <div class="card h-100 border-0 shadow-sm text-center">
+              <div class="card-body">
+                <i class="fas fa-bone fa-3x text-primary mb-3"></i>
+                <h5>Orthopedics</h5>
+                <p class="text-muted">Specialized care for bones, joints, and musculoskeletal conditions.</p>
+              </div>
             </div>
+          </div>
+          <div class="col-md-4">
+            <div class="card h-100 border-0 shadow-sm text-center">
+              <div class="card-body">
+                <i class="fas fa-brain fa-3x text-info mb-3"></i>
+                <h5>Neurology</h5>
+                <p class="text-muted">Expert diagnosis and treatment for neurological disorders.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
 
-            <div id="registerSection" class="bg-white p-6 rounded-lg shadow-md mb-8 hidden">
-                <h2 class="text-xl font-semibold mb-4 text-gray-800">Register New Patient</h2>
-                <form id="patientForm" class="space-y-4" novalidate>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            <label for="name" class="block text-sm font-medium text-gray-700">Name</label>
-                            <input type="text" id="name" required class="mt-1 block w-full border border-gray-300 rounded-md p-2 focus:ring-none focus:border-gray-300" pattern="[A-Za-z\s]+" aria-label="Patient name">
-                            <p id="nameError" class="field-error">Letters and spaces only</p>
-                        </div>
-                        <div>
-                            <label for="address" class="block text-sm font-medium text-gray-700">Address</label>
-                            <input type="text" id="address" required class="mt-1 block w-full border border-gray-300 rounded-md p-2 focus:ring-none focus:border-gray-300" aria-label="Patient address">
-                            <p id="addressError" class="field-error">Address is required</p>
-                        </div>
-                        <div>
-                            <label for="age" class="block text-sm font-medium text-gray-700">Age</label>
-                            <input type="number" id="age" required min="0" max="120" class="mt-1 block w-full border border-gray-300 rounded-md p-2 focus:ring-none focus:border-gray-300" aria-label="Patient age">
-                            <p id="ageError" class="field-error">Age must be 0-120</p>
-                        </div>
-                        <div>
-                            <label for="phone" class="block text-sm font-medium text-gray-700">Phone Number</label>
-                            <input type="tel" id="phone" required class="mt-1 block w-full border border-gray-300 rounded-md p-2 focus:ring-none focus:border-gray-300" pattern="[0-9\s\-\+\(\)]+" aria-label="Patient phone number">
-                            <p id="phoneError" class="field-error">Numbers, spaces, +, -, or () only</p>
-                        </div>
-                        <div>
-                            <label for="joiningDate" class="block text-sm font-medium text-gray-700">Joining Date</label>
-                            <input type="date" id="joiningDate" required class="mt-1 block w-full border border-gray-300 rounded-md p-2 focus:ring-none focus:border-gray-300" aria-label="Joining date">
-                            <p id="joiningDateError" class="field-error">Valid date required (not in future)</p>
-                        </div>
-                    </div>
-                    <div>
-                        <label for="healthIssues" class="block text-sm font-medium text-gray-700">Health Issues</label>
-                        <textarea id="healthIssues" required class="mt-1 block w-full border border-gray-300 rounded-md p-2 focus:ring-none focus:border-gray-300" aria-label="Patient health issues"></textarea>
-                        <p id="healthIssuesError" class="field-error">Health issues are required</p>
-                    </div>
-                    <div>
-                        <label for="surgery" class="block text-sm font-medium text-gray-700">Surgery History</label>
-                        <textarea id="surgery" class="mt-1 block w-full border border-gray-300 rounded-md p-2 focus:ring-none focus:border-gray-300" aria-label="Patient surgery history"></textarea>
-                    </div>
-                    <div>
-                        <label for="paralysisStatus" class="block text-sm font-medium text-gray-700">Paralysis Status</label>
-                        <select id="paralysisStatus" required class="mt-1 block w-full border border-gray-300 rounded-md p-2 focus:ring-none focus:border-gray-300" aria-label="Patient paralysis status">
-                            <option value="None">None</option>
-                            <option value="Partial">Partial</option>
-                            <option value="Full">Paralysis</option>
-                        </select>
-                        <p id="paralysisStatusError" class="field-error">Please select a status</p>
-                    </div>
-                    <div>
-                        <label for="otherDetails" class="block text-sm font-medium text-gray-700">Other Details</label>
-                        <textarea id="otherDetails" class="mt-1 block w-full border border-gray-300 rounded-md p-2 focus:ring-none focus:border-gray-300" aria-label="Other patient details"></textarea>
-                    </div>
-                    <button type="submit" class="w-full bg-green-600 text-white font-semibold py-2 px-4 rounded-md hover:bg-green-700" aria-label="Register patient">Register Patient</button>
+    <!-- Contact Section -->
+    <section class="py-5" id="contact">
+      <div class="container">
+        <h2 class="text-center mb-5">Contact Us</h2>
+        <div class="row">
+          <div class="col-md-6">
+            <div class="card border-0 shadow-sm h-100">
+              <div class="card-body">
+                <h5><i class="fas fa-map-marker-alt text-primary me-2"></i> Address</h5>
+                <p>Rampur-5, Palpa, Nepal</p>
+
+                <h5 class="mt-4"><i class="fas fa-phone text-primary me-2"></i> Phone</h5>
+                <p>+977 1234567890</p>
+
+                <h5 class="mt-4"><i class="fas fa-envelope text-primary me-2"></i> Email</h5>
+                <p>info@ghlk.com</p>
+
+                <h5 class="mt-4"><i class="fas fa-clock text-primary me-2"></i> Hours</h5>
+                <p>24/7 Emergency Services<br>
+                  OPD: 8AM - 6PM Daily</p>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="card border-0 shadow-sm h-100">
+              <div class="card-body">
+                <h5>Send Us a Message</h5>
+                <form id="contactForm">
+                  <div class="mb-3">
+                    <input type="text" class="form-control" placeholder="Your Name" required>
+                  </div>
+                  <div class="mb-3">
+                    <input type="email" class="form-control" placeholder="Your Email" required>
+                  </div>
+                  <div class="mb-3">
+                    <input type="tel" class="form-control" placeholder="Phone Number">
+                  </div>
+                  <div class="mb-3">
+                    <textarea class="form-control" rows="4" placeholder="Your Message" required></textarea>
+                  </div>
+                  <button type="submit" class="btn btn-primary">Send Message</button>
                 </form>
-                <div id="idCardSection" class="hidden mt-4">
-                    <h3 class="text-lg font-semibold mb-2">Patient ID Card</h3>
-                    <div id="idCard" class="mx-auto"></div>
-                    <div class="flex justify-center space-x-4 mt-4">
-                        <button id="downloadCard" class="bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700" aria-label="Download ID card">Download ID Card</button>
-                        <button id="closeCard" class="bg-gray-600 text-white py-2 px-4 rounded-md hover:bg-gray-700" aria-label="Close ID card">Close</button>
-                    </div>
-                </div>
+              </div>
             </div>
-
-            <div class="bg-white p-6 rounded-lg shadow-md mb-8">
-                <h2 class="text-xl font-semibold mb-4 text-gray-800">Attendance & Bed Management</h2>
-                <div id="qrScannerSection">
-                    <p class="text-gray-700 mb-2">Scan QR Code or Enter Patient ID</p>
-                    <div id="qrVideo"></div>
-                    <div id="scanner-output"></div>
-                    <div class="flex justify-center space-x-4 mb-4">
-                        <button id="startScanner" class="bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700" aria-label="Start QR scanner">Start QR Scanner</button>
-                        <button id="stopScanner" class="bg-red-600 text-white py-2 px-4 rounded-md hover:bg-red-700 hidden" aria-label="Stop QR scanner">Stop QR Scanner</button>
-                    </div>
-                    <div>
-                        <label for="patientId" class="block text-sm font-medium text-gray-700">Patient ID</label>
-                        <input type="text" id="patientId" class="mt-1 block w-full border border-gray-300 rounded-md p-2 focus:ring-none focus:border-gray-300" pattern="GHLK\d{4}" aria-label="Patient ID">
-                        <p id="patientIdError" class="field-error">Format: GHLK followed by 4 digits</p>
-                    </div>
-                    <button id="checkId" class="w-full bg-blue-600 text-white font-semibold py-2 px-4 rounded-md hover:bg-blue-700 mt-4" aria-label="Check patient ID">Check ID</button>
-                    <p id="noDetails" class="text-red-500 mt-2 hidden">No patient found for this ID</p>
-                </div>
-                <div id="patientDetailsSection" class="mt-4 hidden">
-                    <h3 class="text-lg font-semibold mb-2">Patient Details</h3>
-                    <div id="patientDetails" class="text-gray-700"></div>
-                    <div class="flex justify-start space-x-4 mt-4">
-                        <button id="editDetailsButton" class="bg-blue-600 text-white font-semibold py-2 px-4 rounded-md hover:bg-blue-700" aria-label="Edit patient details">Edit Details</button>
-                    </div>
-                    <div id="editPatientSection" class="mt-4 hidden">
-                        <h3 class="text-lg font-semibold mb-2">Edit Patient Details</h3>
-                        <form id="editPatientForm" class="space-y-4" novalidate>
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div>
-                                    <label for="editId" class="block text-sm font-medium text-gray-700">Patient ID (Read-only)</label>
-                                    <input type="text" id="editId" readonly class="mt-1 block w-full border border-gray-300 rounded-md p-2 bg-gray-100" aria-label="Patient ID">
-                                </div>
-                                <div>
-                                    <label for="editName" class="block text-sm font-medium text-gray-700">Name</label>
-                                    <input type="text" id="editName" required class="mt-1 block w-full border border-gray-300 rounded-md p-2 focus:ring-none focus:border-gray-300" pattern="[A-Za-z\s]+" aria-label="Patient name">
-                                    <p id="editNameError" class="field-error">Letters and spaces only</p>
-                                </div>
-                                <div>
-                                    <label for="editAddress" class="block text-sm font-medium text-gray-700">Address</label>
-                                    <input type="text" id="editAddress" required class="mt-1 block w-full border border-gray-300 rounded-md p-2 focus:ring-none focus:border-gray-300" aria-label="Patient address">
-                                    <p id="editAddressError" class="field-error">Address is required</p>
-                                </div>
-                                <div>
-                                    <label for="editAge" class="block text-sm font-medium text-gray-700">Age</label>
-                                    <input type="number" id="editAge" required min="0" max="120" class="mt-1 block w-full border border-gray-300 rounded-md p-2 focus:ring-none focus:border-gray-300" aria-label="Patient age">
-                                    <p id="editAgeError" class="field-error">Age must be 0-120</p>
-                                </div>
-                                <div>
-                                    <label for="editPhone" class="block text-sm font-medium text-gray-700">Phone Number</label>
-                                    <input type="tel" id="editPhone" required class="mt-1 block w-full border border-gray-300 rounded-md p-2 focus:ring-none focus:border-gray-300" pattern="[0-9\s\-\+\(\)]+" aria-label="Patient phone number">
-                                    <p id="editPhoneError" class="field-error">Numbers, spaces, +, -, or () only</p>
-                                </div>
-                                <div>
-                                    <label for="editJoiningDate" class="block text-sm font-medium text-gray-700">Joining Date</label>
-                                    <input type="date" id="editJoiningDate" required class="mt-1 block w-full border border-gray-300 rounded-md p-2 focus:ring-none focus:border-gray-300" aria-label="Joining date">
-                                    <p id="editJoiningDateError" class="field-error">Valid date required (not in future)</p>
-                                </div>
-                            </div>
-                            <div>
-                                <label for="editHealthIssues" class="block text-sm font-medium text-gray-700">Health Issues</label>
-                                <textarea id="editHealthIssues" required class="mt-1 block w-full border border-gray-300 rounded-md p-2 focus:ring-none focus:border-gray-300" aria-label="Patient health issues"></textarea>
-                                <p id="editHealthIssuesError" class="field-error">Health issues are required</p>
-                            </div>
-                            <div>
-                                <label for="editSurgery" class="block text-sm font-medium text-gray-700">Surgery History</label>
-                                <textarea id="editSurgery" class="mt-1 block w-full border border-gray-300 rounded-md p-2 focus:ring-none focus:border-gray-300" aria-label="Patient surgery history"></textarea>
-                            </div>
-                            <div>
-                                <label for="editParalysisStatus" class="block text-sm font-medium text-gray-700">Paralysis Status</label>
-                                <select id="editParalysisStatus" required class="mt-1 block w-full border border-gray-300 rounded-md p-2 focus:ring-none focus:border-gray-300" aria-label="Patient paralysis status">
-                                    <option value="None">None</option>
-                                    <option value="Partial">Partial</option>
-                                    <option value="Full">Paralysis</option>
-                                </select>
-                                <p id="editParalysisStatusError" class="field-error">Please select a status</p>
-                            </div>
-                            <div>
-                                <label for="editOtherDetails" class="block text-sm font-medium text-gray-700">Other Details</label>
-                                <textarea id="editOtherDetails" class="mt-1 block w-full border border-gray-300 rounded-md p-2 focus:ring-none focus:border-gray-300" aria-label="Other patient details"></textarea>
-                            </div>
-                            <div class="flex justify-end space-x-4">
-                                <button type="submit" class="bg-green-600 text-white font-semibold py-2 px-4 rounded-md hover:bg-green-700" aria-label="Save changes">Save Changes</button>
-                                <button type="button" id="cancelEdit" class="bg-gray-600 text-white font-semibold py-2 px-4 rounded-md hover:bg-gray-700" aria-label="Cancel edit">Cancel</button>
-                            </div>
-                        </form>
-                    </div>
-                    <h3 class="text-lg font-semibold mt-4 mb-2">Update Attendance & Status</h3>
-                    <form id="attendanceForm" class="space-y-4" novalidate>
-                        <div>
-                            <label for="bedNumber" class="block text-sm font-medium text-gray-700">Bed Number</label>
-                            <input type="number" id="bedNumber" min="0" class="mt-1 block w-full border border-gray-300 rounded-md p-2 focus:ring-none focus:border-gray-300" aria-label="Bed number">
-                        </div>
-                        <div>
-                            <label for="healthStatus" class="block text-sm font-medium text-gray-700">Health Status</label>
-                            <select id="healthStatus" class="mt-1 block w-full border border-gray-300 rounded-md p-2 focus:ring-none focus:border-gray-300" aria-label="Health status">
-                                <option value="Stable">Stable</option>
-                                <option value="Improving">Improving</option>
-                                <option value="Critical">Critical</option>
-                            </select>
-                        </div>
-                        <button type="submit" class="w-full bg-green-600 text-white font-semibold py-2 px-4 rounded-md hover:bg-green-700" aria-label="Mark attendance">Mark Attendance</button>
-                    </form>
-                    <h3 class="text-lg font-semibold mt-4 mb-2">Past Attendance Records</h3>
-                    <table id="patientAttendanceTable">
-                        <thead>
-                            <tr>
-                                <th>Date</th>
-                                <th>Bed</th>
-                                <th>Status</th>
-                            </tr>
-                        </thead>
-                        <tbody></tbody>
-                    </table>
-                </div>
-            </div>
-
-            <div class="bg-white p-6 rounded-lg shadow-md mb-8">
-                <h2 class="text-xl font-semibold mb-4 text-gray-800">Patient List</h2>
-                <div class="table-responsive">
-                    <table id="patientTable">
-                        <thead>
-                            <tr>
-                                <th data-sort="id">ID</th>
-                                <th data-sort="name">Name</th>
-                                <th>Address</th>
-                                <th>Age</th>
-                                <th>Phone</th>
-                                <th>Health Issues</th>
-                                <th>Paralysis Status</th>
-                                <th>Surgery</th>
-                                <th>Other Details</th>
-                                <th>Joining Date</th>
-                                <th>Status</th>
-                            </tr>
-                        </thead>
-                        <tbody></tbody>
-                    </table>
-                </div>
-            </div>
-
-            <div class="bg-white p-6 rounded-lg shadow-md mb-8">
-                <h2 class="text-xl font-semibold mb-4 text-gray-800">Attendance Records</h2>
-                <div class="table-responsive">
-                    <table id="attendanceTable">
-                        <thead>
-                            <tr>
-                                <th>Date</th>
-                                <th>Patient ID</th>
-                                <th>Name</th>
-                                <th>Bed</th>
-                                <th>Status</th>
-                            </tr>
-                        </thead>
-                        <tbody></tbody>
-                    </table>
-                </div>
-            </div>
-
-            <div class="bg-white p-6 rounded-lg shadow-md">
-                <h2 class="text-xl font-semibold mb-4 text-gray-800">Health Status Trends</h2>
-                <canvas id="statusChart"></canvas>
-            </div>
+          </div>
         </div>
+      </div>
+    </section>
 
-        <div id="publicSection" class="bg-white p-6 rounded-lg shadow-md mb-8">
-            <h2 class="text-xl font-semibold mb-4 text-gray-800">About GHLK</h2>
-            <p class="text-gray-700 mb-4">Green and Happy Life Korea (GHLK) provides thermal therapy and fitness programs to improve health and mobility in Rampur, Palpa, Nepal.</p>
-            <h2 class="text-xl font-semibold mb-4 text-gray-800">Submit a Review</h2>
-            <form id="reviewForm" class="space-y-4" novalidate>
-                <div>
-                    <label for="reviewName" class="block text-sm font-medium text-gray-700">Your Name</label>
-                    <input type="text" id="reviewName" required class="mt-1 block w-full border border-gray-300 rounded-md p-2 focus:ring-none focus:border-gray-300" pattern="[A-Za-z\s\.\-]+" aria-label="Reviewer name">
-                    <p id="reviewNameError" class="field-error">Letters, spaces, dots, or hyphens only</p>
-                </div>
-                <div>
-                    <label for="reviewText" class="block text-sm font-medium text-gray-700">Review</label>
-                    <textarea id="reviewText" required class="mt-1 block w-full border border-gray-300 rounded-md p-2 focus:ring-none focus:border-gray-300" aria-label="Review text"></textarea>
-                    <p id="reviewTextError" class="field-error">Review text is required</p>
-                </div>
-                <button type="submit" class="w-full bg-green-600 text-white font-semibold py-2 px-4 rounded-md hover:bg-green-700" aria-label="Submit review">Submit Review</button>
+    <!-- Footer -->
+    <footer class="bg-dark text-white py-4">
+      <div class="container">
+        <div class="row">
+          <div class="col-md-6">
+            <h5>GHLK Health Care Center</h5>
+            <p>Committed to providing quality healthcare services to our community.</p>
+          </div>
+          <div class="col-md-3">
+            <h5>Quick Links</h5>
+            <ul class="list-unstyled">
+              <li><a href="#home" class="text-white">Home</a></li>
+              <li><a href="#about" class="text-white">About</a></li>
+              <li><a href="#contact" class="text-white">Contact</a></li>
+            </ul>
+          </div>
+          <div class="col-md-3">
+            <h5>Connect With Us</h5>
+            <div class="social-links">
+              <a href="#" class="text-white me-2"><i class="fab fa-facebook-f"></i></a>
+              <a href="#" class="text-white me-2"><i class="fab fa-twitter"></i></a>
+              <a href="#" class="text-white me-2"><i class="fab fa-instagram"></i></a>
+              <a href="#" class="text-white"><i class="fab fa-linkedin-in"></i></a>
+            </div>
+          </div>
+        </div>
+        <hr>
+        <div class="text-center">
+          <p class="mb-0">&copy; 2023 GHLK Health Care Center. All rights reserved.</p>
+        </div>
+      </div>
+    </footer>
+
+    <!-- Login Modal -->
+    <div class="modal fade" id="loginModal" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Staff Login</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <form id="staffLoginForm">
+              <div class="mb-3">
+                <label for="username" class="form-label">Username</label>
+                <input type="text" class="form-control" id="username" required>
+              </div>
+              <div class="mb-3">
+                <label for="password" class="form-label">Password</label>
+                <input type="password" class="form-control" id="password" required>
+              </div>
+              <div class="d-grid">
+                <button type="submit" class="btn btn-primary">Login</button>
+              </div>
             </form>
-            <button id="testApi" class="w-full bg-blue-600 text-white font-semibold py-2 px-4 rounded-md hover:bg-blue-700 mt-4" aria-label="Test API">Test API</button>
-            <h2 class="text-xl font-semibold mt-6 mb-4 text-gray-800">Reviews</h2>
-            <div id="reviewList" class="space-y-4"></div>
+          </div>
         </div>
+      </div>
     </div>
 
-    <script nonce="ghlk">
-        // Google Apps Script Web App URL
-        const API_URL = 'https://script.google.com/macros/s/AKfycbzoH9Sa4EBrva--Qm2jC4PEGVZxkeEUQYVROIqfc6NVMOtLzVCvuKOWe9ub4iMDcVKFRw/exec';
+    <!-- Visitor Scanner Modal -->
+    <div class="modal fade" id="visitorScannerModal" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Patient Identification</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <div class="input-group mb-3">
+              <input type="text" id="visitorManualId" class="form-control" placeholder="Enter Patient ID">
+              <button id="visitorSearchBtn" class="btn btn-primary">Search</button>
+            </div>
 
-        // Mock credentials (demo only; use server-side auth in production)
-        const staffCredentials = [
-            { username: 'staff1', passwordHash: 'ghlk123' },
-            { username: 'admin', passwordHash: 'ghlkadmin' }
+            <div class="d-flex align-items-center my-3">
+              <hr class="flex-grow-1">
+              <span class="mx-2">OR</span>
+              <hr class="flex-grow-1">
+            </div>
+
+            <div id="visitorQrScanner" style="width:100%;height:300px;border:2px dashed #ccc;"></div>
+            <div id="visitorScanResult" class="mt-3 text-center fw-bold"></div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main System (hidden by default) -->
+  <div id="mainSystem" class="container py-4" style="display: none;">
+    <!-- System Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <div>
+        <h2 class="mb-0">
+          <i class="fas fa-hospital me-2"></i> GHLK Patient Management System
+        </h2>
+        <small class="text-muted">Logged in as: <span id="loggedInUser">Admin</span></small>
+      </div>
+      <button id="logoutBtn" class="btn btn-danger">
+        <i class="fas fa-sign-out-alt me-1"></i> Logout
+      </button>
+    </div>
+
+    <!-- Navigation Cards -->
+    <div class="row g-4 mb-4">
+      <div class="col-md-3">
+        <div class="card h-100 border-0 shadow-sm text-center hover-effect" id="showRegistrationBtn">
+          <div class="card-body">
+            <i class="fas fa-user-plus fa-3x text-primary mb-3"></i>
+            <h5>Register Patient</h5>
+            <p class="text-muted">Add new patient to the system</p>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="card h-100 border-0 shadow-sm text-center hover-effect" id="showPatientsBtn">
+          <div class="card-body">
+            <i class="fas fa-users fa-3x text-info mb-3"></i>
+            <h5>Patient Records</h5>
+            <p class="text-muted">View all registered patients</p>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="card h-100 border-0 shadow-sm text-center hover-effect" id="showAttendanceBtn">
+          <div class="card-body">
+            <i class="fas fa-calendar-check fa-3x text-success mb-3"></i>
+            <h5>Attendance</h5>
+            <p class="text-muted">View patient attendance</p>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="card h-100 border-0 shadow-sm text-center hover-effect" id="scanQrBtn">
+          <div class="card-body">
+            <i class="fas fa-qrcode fa-3x text-warning mb-3"></i>
+            <h5>Patient Lookup</h5>
+            <p class="text-muted">Scan or search for patient</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Registration Form -->
+    <div id="registrationForm" class="form-container" style="display: none;">
+      <button type="button" class="btn-close position-absolute top-0 end-0 m-3"
+        onclick="hideForm('registrationForm')"></button>
+      <h3 class="text-center mb-4">
+        <i class="fas fa-user-plus me-2"></i> Patient Registration
+      </h3>
+      <form id="health-form">
+        <div class="row">
+          <div class="col-md-6">
+            <div class="mb-3">
+              <label for="name" class="form-label">Full Name <span class="text-danger">*</span></label>
+              <input type="text" class="form-control" id="name" name="name" required>
+            </div>
+
+            <div class="mb-3">
+              <label for="age" class="form-label">Age <span class="text-danger">*</span></label>
+              <input type="number" class="form-control" id="age" name="age" min="1" max="120" required>
+            </div>
+
+            <div class="mb-3">
+              <label for="address" class="form-label">Address</label>
+              <textarea class="form-control" id="address" name="address" rows="2"></textarea>
+            </div>
+
+            <div class="mb-3">
+              <label for="contact_number" class="form-label">Contact Number <span class="text-danger">*</span></label>
+              <input type="tel" class="form-control" id="contact_number" name="contact_number" pattern="[0-9]{10,15}"
+                title="10-15 digit phone number" required>
+            </div>
+          </div>
+
+          <div class="col-md-6">
+            <div class="mb-3">
+              <label for="gender" class="form-label">Gender <span class="text-danger">*</span></label>
+              <select class="form-select" id="gender" name="gender" required>
+                <option value="" selected disabled>Select Gender</option>
+                <option value="Male">Male</option>
+                <option value="Female">Female</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label">Passport Photo (35mm x 45mm)</label>
+              <div class="d-flex gap-2 mb-2">
+                <button type="button" class="btn btn-outline-secondary" id="takePhotoBtn">
+                  <i class="fas fa-camera me-1"></i> Take Photo
+                </button>
+                <button type="button" class="btn btn-outline-secondary" id="uploadPhoto">
+                  <i class="fas fa-upload me-1"></i> Upload
+                </button>
+                <input type="file" id="photoInput" accept="image/*" style="display: none;">
+              </div>
+              <video id="video" playsinline style="display: none; width: 100%;"></video>
+              <img id="photoPreview" alt="Photo preview" class="d-block mx-auto">
+              <button type="button" class="btn btn-outline-danger mt-2 mx-auto d-block" id="retakePhoto"
+                style="display: none;">
+                <i class="fas fa-redo me-1"></i> Retake
+              </button>
+            </div>
+
+            <div class="mb-3">
+              <label for="health_issues" class="form-label">Health Issues</label>
+              <input type="text" class="form-control" id="health_issues" name="health_issues">
+            </div>
+
+            <div class="mb-3">
+              <label for="joining_date" class="form-label">Joining Date</label>
+              <input type="date" class="form-control" id="joining_date" name="joining_date">
+            </div>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="col-md-6">
+            <div class="mb-3">
+              <label for="surgery" class="form-label">Surgery History</label>
+              <input type="text" class="form-control" id="surgery" name="surgery">
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="mb-3">
+              <label for="paralysis_status" class="form-label">Paralysis Status</label>
+              <select class="form-select" id="paralysis_status" name="paralysis_status">
+                <option value="" selected>Select Status</option>
+                <option value="None">None</option>
+                <option value="Partial">Partial</option>
+                <option value="Full">Full</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="mb-3">
+          <label for="other_details" class="form-label">Other Details</label>
+          <textarea class="form-control" id="other_details" name="other_details" rows="2"></textarea>
+        </div>
+
+        <div class="d-grid">
+          <button type="submit" class="btn btn-primary btn-lg">
+            <i class="fas fa-save me-1"></i> Register Patient
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <!-- ID Card Section -->
+    <div id="idCardContainer" class="form-container" style="display: none;">
+      <button type="button" class="btn-close position-absolute top-0 end-0 m-3"
+        onclick="hideForm('idCardContainer')"></button>
+      <div id="idCard">
+        <div class="company-header text-center mb-3">
+          <h2 class="mb-1">GHLK Health Care Center</h2>
+          <p class="mb-0">Rampur-5, Palpa, Nepal</p>
+        </div>
+
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <div>
+            <img id="idCardPhoto" alt="Patient Photo" class="photo border">
+          </div>
+          <div class="qr">
+            <img id="qrCode" src="" alt="QR Code">
+          </div>
+        </div>
+
+        <div class="details">
+          <b>Patient ID:</b> <span id="idCardPatientId">GHLK00001</span>
+          <b>Name:</b> <span id="idCardName">John Doe</span>
+          <b>Age:</b> <span id="idCardAge">30</span>
+          <b>Address:</b> <span id="idCardAddress">123 Main St, Palpa</span>
+          <b>Mobile:</b> <span id="idCardMobile">+977 9876543210</span>
+          <b>Join Date:</b> <span id="idCardJoiningDate">2023-06-15</span>
+        </div>
+
+        <div class="signature-space mt-3">
+          <p class="mb-0">Authorized Signatory with Stamp</p>
+        </div>
+
+        <div class="id-card-footer text-center mt-3">
+          <p class="mb-0">This card is property of GHLK Health Care Center</p>
+        </div>
+      </div>
+
+      <div class="text-center mt-4">
+        <button onclick="downloadIDCard()" class="btn btn-success me-2">
+          <i class="fas fa-download me-1"></i> Download
+        </button>
+        <button onclick="window.print()" class="btn btn-primary">
+          <i class="fas fa-print me-1"></i> Print
+        </button>
+      </div>
+    </div>
+
+    <!-- QR Scanner Section -->
+    <div id="scannerSection" class="form-container">
+      <h3 class="text-center mb-4">
+        <i class="fas fa-search me-2"></i> Patient Lookup
+      </h3>
+
+      <div class="mb-4">
+        <div class="input-group">
+          <input type="text" id="manualPatientId" class="form-control form-control-lg" placeholder="Enter Patient ID">
+          <button id="searchPatientBtn" class="btn btn-primary">
+            <i class="fas fa-search me-1"></i> Search
+          </button>
+        </div>
+
+        <div class="d-flex align-items-center my-3">
+          <hr class="flex-grow-1">
+          <span class="mx-2">OR</span>
+          <hr class="flex-grow-1">
+        </div>
+
+        <div id="qrScanner" style="width:100%;height:300px;border:2px dashed #ccc;margin-bottom:15px;"></div>
+
+        <div class="text-center">
+          <button id="startScanner" class="btn btn-primary me-2">
+            <i class="fas fa-play me-1"></i> Start Scanner
+          </button>
+          <button id="stopScanner" class="btn btn-danger" style="display: none;">
+            <i class="fas fa-stop me-1"></i> Stop Scanner
+          </button>
+        </div>
+
+        <div id="scanResult" class="text-center fw-bold mt-3"></div>
+      </div>
+    </div>
+
+    <!-- Attendance Form -->
+    <div id="attendanceForm" class="form-container" style="display: none;">
+      <button type="button" class="btn-close position-absolute top-0 end-0 m-3"
+        onclick="hideForm('attendanceForm')"></button>
+      <h3 class="text-center mb-4">
+        <i class="fas fa-calendar-check me-2"></i> Patient Attendance
+      </h3>
+
+      <div class="row">
+        <div class="col-md-6">
+          <table class="table table-bordered">
+            <tr>
+              <th class="w-25">Patient ID</th>
+              <td id="attendanceId">GHLK00001</td>
+            </tr>
+            <tr>
+              <th>Name</th>
+              <td id="attendanceName">John Doe</td>
+            </tr>
+            <tr>
+              <th>Age</th>
+              <td id="attendanceAge">30</td>
+            </tr>
+          </table>
+        </div>
+        <div class="col-md-6">
+          <div class="text-center">
+            <img id="attendancePhoto" src="" style="width:35mm;height:45mm;object-fit:cover;" class="border">
+          </div>
+        </div>
+      </div>
+
+      <div class="mb-3">
+        <label for="bedType" class="form-label">Bed Type</label>
+        <select class="form-select" id="bedType">
+          <option value="TM">TM</option>
+          <option value="A700">A700</option>
+          <option value="X-3">X-3</option>
+        </select>
+      </div>
+
+      <h5 class="mt-4">Attendance History</h5>
+      <div class="attendance-calendar" id="attendanceCalendar"></div>
+
+      <div class="d-flex justify-content-between mt-4">
+        <button id="editDetailsBtn" class="btn btn-warning">
+          <i class="fas fa-edit me-1"></i> Edit Details
+        </button>
+        <button id="markAttendance" class="btn btn-success">
+          <i class="fas fa-check-circle me-1"></i> Mark Attendance
+        </button>
+      </div>
+    </div>
+
+    <!-- Edit Form -->
+    <div id="editForm" class="form-container" style="display: none;">
+      <button type="button" class="btn-close position-absolute top-0 end-0 m-3" onclick="hideForm('editForm')"></button>
+      <h3 class="text-center mb-4">
+        <i class="fas fa-user-edit me-2"></i> Edit Patient Details
+      </h3>
+      <form id="edit-health-form">
+        <div class="row">
+          <div class="col-md-6">
+            <div class="mb-3">
+              <label for="edit-name" class="form-label">Full Name <span class="text-danger">*</span></label>
+              <input type="text" class="form-control" id="edit-name" name="edit-name" required>
+            </div>
+
+            <div class="mb-3">
+              <label for="edit-age" class="form-label">Age <span class="text-danger">*</span></label>
+              <input type="number" class="form-control" id="edit-age" name="edit-age" min="1" max="120" required>
+            </div>
+
+            <div class="mb-3">
+              <label for="edit-address" class="form-label">Address</label>
+              <textarea class="form-control" id="edit-address" name="edit-address" rows="2"></textarea>
+            </div>
+
+            <div class="mb-3">
+              <label for="edit-contact_number" class="form-label">Contact Number <span
+                  class="text-danger">*</span></label>
+              <input type="tel" class="form-control" id="edit-contact_number" name="edit-contact_number"
+                pattern="[0-9]{10,15}" title="10-15 digit phone number" required>
+            </div>
+          </div>
+
+          <div class="col-md-6">
+            <div class="mb-3">
+              <label for="edit-gender" class="form-label">Gender <span class="text-danger">*</span></label>
+              <select class="form-select" id="edit-gender" name="edit-gender" required>
+                <option value="" selected disabled>Select Gender</option>
+                <option value="Male">Male</option>
+                <option value="Female">Female</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label">Passport Photo (35mm x 45mm)</label>
+              <div class="d-flex gap-2 mb-2">
+                <button type="button" class="btn btn-outline-secondary" id="edit-takePhotoBtn">
+                  <i class="fas fa-camera me-1"></i> Take Photo
+                </button>
+                <button type="button" class="btn btn-outline-secondary" id="edit-uploadPhoto">
+                  <i class="fas fa-upload me-1"></i> Upload
+                </button>
+                <input type="file" id="edit-photoInput" accept="image/*" style="display: none;">
+              </div>
+              <video id="edit-video" playsinline style="display: none; width: 100%;"></video>
+              <img id="edit-photoPreview" alt="Photo preview" class="d-block mx-auto">
+              <button type="button" class="btn btn-outline-danger mt-2 mx-auto d-block" id="edit-retakePhoto"
+                style="display: none;">
+                <i class="fas fa-redo me-1"></i> Retake
+              </button>
+            </div>
+
+            <div class="mb-3">
+              <label for="edit-health_issues" class="form-label">Health Issues</label>
+              <input type="text" class="form-control" id="edit-health_issues" name="edit-health_issues">
+            </div>
+
+            <div class="mb-3">
+              <label for="edit-joining_date" class="form-label">Joining Date</label>
+              <input type="date" class="form-control" id="edit-joining_date" name="edit-joining_date">
+            </div>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="col-md-6">
+            <div class="mb-3">
+              <label for="edit-surgery" class="form-label">Surgery History</label>
+              <input type="text" class="form-control" id="edit-surgery" name="edit-surgery">
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="mb-3">
+              <label for="edit-paralysis_status" class="form-label">Paralysis Status</label>
+              <select class="form-select" id="edit-paralysis_status" name="edit-paralysis_status">
+                <option value="" selected>Select Status</option>
+                <option value="None">None</option>
+                <option value="Partial">Partial</option>
+                <option value="Full">Full</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="mb-3">
+          <label for="edit-other_details" class="form-label">Other Details</label>
+          <textarea class="form-control" id="edit-other_details" name="edit-other_details" rows="2"></textarea>
+        </div>
+
+        <input type="hidden" id="edit-patientId">
+
+        <div class="d-grid">
+          <button type="submit" class="btn btn-primary btn-lg">
+            <i class="fas fa-save me-1"></i> Update Details
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <!-- Patients Table -->
+    <div id="patientsTable" class="form-container" style="display: none;">
+      <button type="button" class="btn-close position-absolute top-0 end-0 m-3"
+        onclick="hideForm('patientsTable')"></button>
+      <h3 class="text-center mb-4">
+        <i class="fas fa-users me-2"></i> Patient Records
+      </h3>
+
+      <div class="table-responsive">
+        <table class="table table-striped table-hover">
+          <thead class="table-dark">
+            <tr>
+              <th>Patient ID</th>
+              <th>Name</th>
+              <th>Age</th>
+              <th>Gender</th>
+              <th>Contact</th>
+              <th>Join Date</th>
+              <th>Health Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="patientsTableBody">
+            <!-- Data will be loaded here -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Attendance Table -->
+    <div id="attendanceTable" class="form-container" style="display: none;">
+      <button type="button" class="btn-close position-absolute top-0 end-0 m-3"
+        onclick="hideForm('attendanceTable')"></button>
+      <h3 class="text-center mb-4">
+        <i class="fas fa-calendar-alt me-2"></i> Attendance Records
+      </h3>
+
+      <div class="table-responsive">
+        <table class="table table-striped table-hover">
+          <thead class="table-dark">
+            <tr>
+              <th>Patient ID</th>
+              <th>Name</th>
+              <th>Date</th>
+              <th>Bed Type</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="attendanceTableBody">
+            <!-- Data will be loaded here -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Visitor View -->
+    <div id="visitorView" class="form-container" style="display: none;">
+      <button type="button" class="btn-close position-absolute top-0 end-0 m-3"
+        onclick="hideForm('visitorView')"></button>
+      <h3 class="text-center mb-4">
+        <i class="fas fa-user me-2"></i> Patient Information
+      </h3>
+
+      <div class="row">
+        <div class="col-md-4 text-center">
+          <img id="visitorPhoto" alt="Patient Photo" style="width:35mm;height:45mm;object-fit:cover;"
+            class="border mb-3">
+        </div>
+        <div class="col-md-8">
+          <table class="table table-bordered">
+            <tr>
+              <th class="w-25">Patient ID</th>
+              <td id="visitorId">GHLK00001</td>
+            </tr>
+            <tr>
+              <th>Name</th>
+              <td id="visitorName">John Doe</td>
+            </tr>
+            <tr>
+              <th>Age</th>
+              <td id="visitorAge">30</td>
+            </tr>
+            <tr>
+              <th>Mobile</th>
+              <td id="visitorMobile">+977 9876543210</td>
+            </tr>
+          </table>
+        </div>
+      </div>
+
+      <h5 class="mt-4">Attendance History</h5>
+      <div class="attendance-calendar" id="visitorAttendanceCalendar"></div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div class="toast align-items-center text-white bg-success border-0 position-fixed top-0 end-0 m-3" role="alert"
+      aria-live="assertive" aria-atomic="true" id="successToast">
+      <div class="d-flex">
+        <div class="toast-body">
+          <i class="fas fa-check-circle me-2"></i> <span id="successMessage">Operation completed successfully</span>
+        </div>
+        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"
+          aria-label="Close"></button>
+      </div>
+    </div>
+
+    <div class="toast align-items-center text-white bg-danger border-0 position-fixed top-0 end-0 m-3" role="alert"
+      aria-live="assertive" aria-atomic="true" id="errorToast">
+      <div class="d-flex">
+        <div class="toast-body">
+          <i class="fas fa-exclamation-circle me-2"></i> <span id="errorMessage">An error occurred</span>
+        </div>
+        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"
+          aria-label="Close"></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Libraries -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+  <script>
+    // Main Application
+    document.addEventListener('DOMContentLoaded', function () {
+      // Initialize Bootstrap components
+      const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+      const tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+      });
+
+      const toastElList = [].slice.call(document.querySelectorAll('.toast'));
+      const toastList = toastElList.map(function (toastEl) {
+        return new bootstrap.Toast(toastEl, { autohide: true, delay: 5000 });
+      });
+
+      const successToast = new bootstrap.Toast(document.getElementById('successToast'));
+      const errorToast = new bootstrap.Toast(document.getElementById('errorToast'));
+
+      // Global variables
+      let patients = [];
+      let attendanceRecords = [];
+      let currentPatient = null;
+      let scannerStream = null;
+      let editStream = null;
+      let isStaffLoggedIn = false;
+      let patientCounter = 1;
+
+      // Configuration
+      const CONFIG = {
+        PATIENT_ID_PREFIX: 'GHLK',
+        BED_TYPES: ['TM', 'A700', 'X-3'],
+        API_URL: 'https://script.google.com/macros/s/AKfycbxkkjFbpXr_61zmMgWnAg7FMHLrrrgiHxxEa7BWm3zSjKfRfgGHyKEyRjlxUVCrBFdn/exec' // Replace with your deployed Apps Script URL
+      };
+
+      // Initialize the application
+      init();
+
+      async function init() {
+        await initData();
+        initHomePage();
+        initSystem();
+      }
+
+      // Initialize data from Google Sheets
+      async function initData() {
+        try {
+          const result = await callAPI('getPatients');
+          patients = result.data;
+          if (patients.length > 0) {
+            const lastId = patients[patients.length - 1].ID;
+            patientCounter = parseInt(lastId.replace(CONFIG.PATIENT_ID_PREFIX, '')) + 1;
+          }
+        } catch (error) {
+          console.error('Failed to load initial data:', error);
+          showError('Failed to load initial data. Please refresh the page.');
+        }
+      }
+
+      // Initialize homepage
+      function initHomePage() {
+        // Home Scan QR button
+        document.getElementById('homeScanBtn').addEventListener('click', showVisitorScanner);
+
+        // Home Login button - shows modal
+        document.getElementById('homeLoginBtn').addEventListener('click', function (e) {
+          e.preventDefault();
+          const loginModal = new bootstrap.Modal(document.getElementById('loginModal'));
+          loginModal.show();
+        });
+
+        // Staff Login Form
+        document.getElementById('staffLoginForm').addEventListener('submit', async function (e) {
+          e.preventDefault();
+          const username = document.getElementById('username').value;
+          const password = document.getElementById('password').value;
+
+          // Simple authentication (in real app, use proper authentication)
+          if (username === 'admin' && password === 'admin123') {
+            isStaffLoggedIn = true;
+            document.getElementById('homePage').style.display = 'none';
+            document.getElementById('mainSystem').style.display = 'block';
+            document.getElementById('loggedInUser').textContent = username;
+
+            // Close modal
+            const loginModal = bootstrap.Modal.getInstance(document.getElementById('loginModal'));
+            loginModal.hide();
+
+            showSuccess('You are now logged in');
+          } else {
+            showError('Invalid username or password');
+          }
+        });
+      }
+
+      // Initialize system components
+      function initSystem() {
+        initRegistrationForm();
+        initEditForm();
+        initNavigation();
+        initScannerSection();
+      }
+
+      // Initialize scanner section
+      function initScannerSection() {
+        // Manual ID search
+        document.getElementById('searchPatientBtn').addEventListener('click', async function () {
+          const patientId = document.getElementById('manualPatientId').value.trim();
+          if (patientId) {
+            try {
+              const patient = await getPatient(patientId);
+              currentPatient = patient;
+              showAttendanceForm(patient);
+            } catch (error) {
+              showError('Patient not found');
+            }
+          }
+        });
+
+        // Also allow Enter key to search
+        document.getElementById('manualPatientId').addEventListener('keypress', function (e) {
+          if (e.key === 'Enter') {
+            document.getElementById('searchPatientBtn').click();
+          }
+        });
+
+        // Initialize QR scanner buttons
+        document.getElementById('startScanner').addEventListener('click', startScanner);
+        document.getElementById('stopScanner').addEventListener('click', stopScanner);
+      }
+
+      // Show visitor scanner
+      function showVisitorScanner() {
+        const visitorModal = new bootstrap.Modal(document.getElementById('visitorScannerModal'));
+        visitorModal.show();
+
+        // Manual ID search for visitor
+        document.getElementById('visitorSearchBtn').addEventListener('click', async function () {
+          const patientId = document.getElementById('visitorManualId').value.trim();
+          if (patientId) {
+            try {
+              const patient = await getPatient(patientId);
+              visitorModal.hide();
+              showVisitorPatientDetails(patient);
+            } catch (error) {
+              document.getElementById('visitorScanResult').textContent = 'Patient not found';
+            }
+          }
+        });
+
+        // Also allow Enter key to search
+        document.getElementById('visitorManualId').addEventListener('keypress', function (e) {
+          if (e.key === 'Enter') {
+            document.getElementById('visitorSearchBtn').click();
+          }
+        });
+
+        // Initialize QR scanner for visitor
+        const visitorQrScanner = document.getElementById('visitorQrScanner');
+        const visitorScanResult = document.getElementById('visitorScanResult');
+        let visitorStream = null;
+
+        navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
+          .then(function (stream) {
+            visitorStream = stream;
+            visitorQrScanner.innerHTML = '';
+            const video = document.createElement('video');
+            video.srcObject = stream;
+            video.setAttribute('playsinline', 'true');
+            video.style.width = '100%';
+            video.style.height = '100%';
+            visitorQrScanner.appendChild(video);
+            video.play();
+
+            // Start scanning
+            scanVisitorQRCode(video);
+          })
+          .catch(function (err) {
+            console.error("Error accessing camera: ", err);
+            visitorScanResult.textContent = 'Error accessing camera';
+          });
+      }
+
+      // Start QR scanner
+      function startScanner() {
+        const qrScanner = document.getElementById('qrScanner');
+        const startScannerBtn = document.getElementById('startScanner');
+        const stopScannerBtn = document.getElementById('stopScanner');
+
+        qrScanner.style.display = 'block';
+        startScannerBtn.style.display = 'none';
+        stopScannerBtn.style.display = 'inline-block';
+        document.getElementById('scanResult').textContent = 'Scanning...';
+
+        navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
+          .then(function (stream) {
+            scannerStream = stream;
+            qrScanner.innerHTML = '';
+            const video = document.createElement('video');
+            video.srcObject = stream;
+            video.setAttribute('playsinline', 'true');
+            video.style.width = '100%';
+            video.style.height = '100%';
+            qrScanner.appendChild(video);
+            video.play();
+
+            // Start scanning
+            scanQRCode(video);
+          })
+          .catch(function (err) {
+            console.error("Error accessing camera: ", err);
+            document.getElementById('scanResult').textContent = 'Error accessing camera';
+          });
+      }
+
+      // Stop QR scanner
+      function stopScanner() {
+        if (scannerStream) {
+          scannerStream.getTracks().forEach(track => track.stop());
+          scannerStream = null;
+        }
+        document.getElementById('qrScanner').style.display = 'none';
+        document.getElementById('qrScanner').innerHTML = '';
+        document.getElementById('startScanner').style.display = 'inline-block';
+        document.getElementById('stopScanner').style.display = 'none';
+        document.getElementById('scanResult').textContent = '';
+      }
+
+      // Show attendance form
+      async function showAttendanceForm(patient) {
+        document.getElementById('attendanceId').textContent = patient.ID;
+        document.getElementById('attendanceName').textContent = patient.Name;
+        document.getElementById('attendanceAge').textContent = patient.Age;
+        document.getElementById('attendancePhoto').src = patient.PhotoUrl || '';
+
+        // Generate attendance calendar
+        try {
+          const attendanceResult = await callAPI('getAttendance', { patientId: patient.ID });
+          generateAttendanceCalendar(patient.ID, attendanceResult.data);
+        } catch (error) {
+          console.error('Failed to load attendance:', error);
+        }
+
+        document.getElementById('scannerSection').style.display = 'none';
+        document.getElementById('attendanceForm').style.display = 'block';
+
+        // Mark Attendance button
+        document.getElementById('markAttendance').onclick = async function () {
+          const bedType = document.getElementById('bedType').value;
+
+          try {
+            await callAPI('addAttendance', {
+              patientId: patient.ID,
+              patientName: patient.Name,
+              bedType: bedType
+            });
+
+            // Refresh attendance data
+            const attendanceResult = await callAPI('getAttendance', { patientId: patient.ID });
+            generateAttendanceCalendar(patient.ID, attendanceResult.data);
+
+            showSuccess(`Attendance marked for ${patient.Name}`);
+          } catch (error) {
+            console.error('Attendance marking failed:', error);
+            showError('Failed to mark attendance');
+          }
+        };
+      }
+
+      // Show visitor patient details
+      async function showVisitorPatientDetails(patient) {
+        document.getElementById('visitorId').textContent = patient.ID;
+        document.getElementById('visitorName').textContent = patient.Name;
+        document.getElementById('visitorAge').textContent = patient.Age;
+        document.getElementById('visitorMobile').textContent = patient.Phone;
+        document.getElementById('visitorPhoto').src = patient.PhotoUrl || '';
+
+        // Generate attendance calendar
+        try {
+          const attendanceResult = await callAPI('getAttendance', { patientId: patient.ID });
+          generateVisitorAttendanceCalendar(patient.ID, attendanceResult.data);
+        } catch (error) {
+          console.error('Failed to load attendance:', error);
+        }
+
+        document.getElementById('visitorView').style.display = 'block';
+      }
+
+      // Initialize registration form
+      function initRegistrationForm() {
+        const photoPreview = document.getElementById('photoPreview');
+        const photoInput = document.getElementById('photoInput');
+        const video = document.getElementById('video');
+        const canvas = document.createElement('canvas');
+        let stream = null;
+
+        // Take Photo button
+        document.getElementById('takePhotoBtn').addEventListener('click', function () {
+          video.style.display = 'block';
+          photoPreview.style.display = 'none';
+          document.getElementById('retakePhoto').style.display = 'none';
+
+          if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+            navigator.mediaDevices.getUserMedia({
+              video: {
+                facingMode: 'user',
+                width: { ideal: 1280 },
+                height: { ideal: 720 }
+              }
+            })
+              .then(function (mediaStream) {
+                stream = mediaStream;
+                video.srcObject = mediaStream;
+                video.play();
+              })
+              .catch(function (error) {
+                showError('Could not access the camera: ' + error.message);
+              });
+          } else {
+            showError('Camera access not supported in this browser');
+          }
+        });
+
+        // Capture photo from camera
+        video.addEventListener('click', function () {
+          canvas.width = video.videoWidth;
+          canvas.height = video.videoHeight;
+          canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
+
+          // Crop to passport size
+          const croppedDataUrl = cropToPassportSize(canvas);
+          photoPreview.src = croppedDataUrl;
+
+          // Stop camera stream
+          if (stream) {
+            stream.getTracks().forEach(track => track.stop());
+          }
+
+          video.style.display = 'none';
+          photoPreview.style.display = 'block';
+          document.getElementById('retakePhoto').style.display = 'block';
+        });
+
+        // Retake photo
+        document.getElementById('retakePhoto').addEventListener('click', function () {
+          photoPreview.style.display = 'none';
+          document.getElementById('takePhotoBtn').click();
+        });
+
+        // Upload photo from file
+        document.getElementById('uploadPhoto').addEventListener('click', function () {
+          photoInput.click();
+        });
+
+        photoInput.addEventListener('change', function (e) {
+          const file = e.target.files[0];
+          if (file) {
+            const reader = new FileReader();
+            reader.onload = function (event) {
+              const img = new Image();
+              img.onload = function () {
+                const imgCanvas = document.createElement('canvas');
+                imgCanvas.width = img.width;
+                imgCanvas.height = img.height;
+                const ctx = imgCanvas.getContext('2d');
+                ctx.drawImage(img, 0, 0);
+
+                const croppedDataUrl = cropToPassportSize(imgCanvas);
+                photoPreview.src = croppedDataUrl;
+                photoPreview.style.display = 'block';
+                document.getElementById('retakePhoto').style.display = 'block';
+              };
+              img.src = event.target.result;
+            };
+            reader.readAsDataURL(file);
+          }
+        });
+
+        // Form submission
+        document.getElementById('health-form').addEventListener('submit', async function (e) {
+          e.preventDefault();
+
+          const patientData = {
+            name: document.getElementById('name').value,
+            age: document.getElementById('age').value,
+            address: document.getElementById('address').value,
+            phone: document.getElementById('contact_number').value,
+            gender: document.getElementById('gender').value,
+            healthIssues: document.getElementById('health_issues').value,
+            surgery: document.getElementById('surgery').value,
+            paralysisStatus: document.getElementById('paralysis_status').value,
+            otherDetails: document.getElementById('other_details').value,
+            joiningDate: document.getElementById('joining_date').value,
+            photoUrl: document.getElementById('photoPreview').src || ''
+          };
+
+          try {
+            const result = await callAPI('addPatient', patientData);
+            const patientId = result.patientId;
+
+            // Refresh patient list
+            const patientsResult = await callAPI('getPatients');
+            patients = patientsResult.data;
+
+            // Update ID Card
+            const patient = await getPatient(patientId);
+            updateIDCard(patient);
+
+            // Show ID card
+            hideAllForms();
+            document.getElementById('idCardContainer').style.display = 'block';
+
+            // Reset form
+            e.target.reset();
+            photoPreview.style.display = 'none';
+            photoPreview.src = '';
+            document.getElementById('retakePhoto').style.display = 'none';
+
+            showSuccess('Patient registered successfully!');
+          } catch (error) {
+            console.error('Registration failed:', error);
+            showError('Failed to register patient: ' + error.message);
+          }
+        });
+      }
+
+      // Initialize edit form
+      function initEditForm() {
+        const photoPreview = document.getElementById('edit-photoPreview');
+        const photoInput = document.getElementById('edit-photoInput');
+        const video = document.getElementById('edit-video');
+        const canvas = document.createElement('canvas');
+        let stream = null;
+
+        // Take Photo button
+        document.getElementById('edit-takePhotoBtn').addEventListener('click', function () {
+          video.style.display = 'block';
+          photoPreview.style.display = 'none';
+          document.getElementById('edit-retakePhoto').style.display = 'none';
+
+          if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+            navigator.mediaDevices.getUserMedia({
+              video: {
+                facingMode: 'user',
+                width: { ideal: 1280 },
+                height: { ideal: 720 }
+              }
+            })
+              .then(function (mediaStream) {
+                stream = mediaStream;
+                video.srcObject = mediaStream;
+                video.play();
+              })
+              .catch(function (error) {
+                showError('Could not access the camera: ' + error.message);
+              });
+          } else {
+            showError('Camera access not supported in this browser');
+          }
+        });
+
+        // Capture photo from camera
+        video.addEventListener('click', function () {
+          canvas.width = video.videoWidth;
+          canvas.height = video.videoHeight;
+          canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
+
+          // Crop to passport size
+          const croppedDataUrl = cropToPassportSize(canvas);
+          photoPreview.src = croppedDataUrl;
+
+          // Stop camera stream
+          if (stream) {
+            stream.getTracks().forEach(track => track.stop());
+          }
+
+          video.style.display = 'none';
+          photoPreview.style.display = 'block';
+          document.getElementById('edit-retakePhoto').style.display = 'block';
+        });
+
+        // Retake photo
+        document.getElementById('edit-retakePhoto').addEventListener('click', function () {
+          photoPreview.style.display = 'none';
+          document.getElementById('edit-takePhotoBtn').click();
+        });
+
+        // Upload photo from file
+        document.getElementById('edit-uploadPhoto').addEventListener('click', function () {
+          photoInput.click();
+        });
+
+        photoInput.addEventListener('change', function (e) {
+          const file = e.target.files[0];
+          if (file) {
+            const reader = new FileReader();
+            reader.onload = function (event) {
+              const img = new Image();
+              img.onload = function () {
+                const imgCanvas = document.createElement('canvas');
+                imgCanvas.width = img.width;
+                imgCanvas.height = img.height;
+                const ctx = imgCanvas.getContext('2d');
+                ctx.drawImage(img, 0, 0);
+
+                const croppedDataUrl = cropToPassportSize(imgCanvas);
+                photoPreview.src = croppedDataUrl;
+                photoPreview.style.display = 'block';
+                document.getElementById('edit-retakePhoto').style.display = 'block';
+              };
+              img.src = event.target.result;
+            };
+            reader.readAsDataURL(file);
+          }
+        });
+
+        // Edit form submission
+        document.getElementById('edit-health-form').addEventListener('submit', async function (e) {
+          e.preventDefault();
+
+          const patientData = {
+            id: document.getElementById('edit-patientId').value,
+            Name: document.getElementById('edit-name').value,
+            Age: document.getElementById('edit-age').value,
+            Address: document.getElementById('edit-address').value,
+            Phone: document.getElementById('edit-contact_number').value,
+            Gender: document.getElementById('edit-gender').value,
+            JoiningDate: document.getElementById('edit-joining_date').value,
+            HealthIssues: document.getElementById('edit-health_issues').value,
+            Surgery: document.getElementById('edit-surgery').value,
+            ParalysisStatus: document.getElementById('edit-paralysis_status').value,
+            OtherDetails: document.getElementById('edit-other_details').value,
+            PhotoUrl: document.getElementById('edit-photoPreview').src || ''
+          };
+
+          try {
+            await callAPI('updatePatient', patientData);
+
+            // Refresh patient list
+            const patientsResult = await callAPI('getPatients');
+            patients = patientsResult.data;
+
+            // Update current patient if we're editing the same one
+            if (currentPatient && currentPatient.ID === patientData.id) {
+              currentPatient = await getPatient(patientData.id);
+            }
+
+            // Hide edit form
+            document.getElementById('editForm').style.display = 'none';
+
+            showSuccess('Patient details updated successfully!');
+          } catch (error) {
+            console.error('Update failed:', error);
+            showError('Failed to update patient: ' + error.message);
+          }
+        });
+
+        // Edit Details button in attendance form
+        document.getElementById('editDetailsBtn').addEventListener('click', async function () {
+          if (currentPatient) {
+            try {
+              const patient = await getPatient(currentPatient.ID);
+              loadPatientIntoEditForm(patient);
+              document.getElementById('attendanceForm').style.display = 'none';
+              document.getElementById('editForm').style.display = 'block';
+            } catch (error) {
+              showError('Failed to load patient details');
+            }
+          }
+        });
+      }
+
+      // Initialize navigation
+      function initNavigation() {
+        // Show Registration Form
+        document.getElementById('showRegistrationBtn').addEventListener('click', function () {
+          hideAllForms();
+          document.getElementById('registrationForm').style.display = 'block';
+        });
+
+        // Show Patients Table
+        document.getElementById('showPatientsBtn').addEventListener('click', async function () {
+          hideAllForms();
+          document.getElementById('patientsTable').style.display = 'block';
+          await updatePatientsTable();
+        });
+
+        // Show Attendance Table
+        document.getElementById('showAttendanceBtn').addEventListener('click', async function () {
+          hideAllForms();
+          document.getElementById('attendanceTable').style.display = 'block';
+          await updateAttendanceTable();
+        });
+
+        // Show QR Scanner
+        document.getElementById('scanQrBtn').addEventListener('click', function () {
+          hideAllForms();
+          document.getElementById('scannerSection').style.display = 'block';
+        });
+
+        // Logout button
+        document.getElementById('logoutBtn').addEventListener('click', function () {
+          isStaffLoggedIn = false;
+          document.getElementById('mainSystem').style.display = 'none';
+          document.getElementById('homePage').style.display = 'block';
+
+          // Stop any active scanner
+          if (scannerStream) {
+            scannerStream.getTracks().forEach(track => track.stop());
+            scannerStream = null;
+          }
+
+          // Clear forms
+          document.getElementById('health-form').reset();
+          document.getElementById('edit-health-form').reset();
+
+          showSuccess('You have been successfully logged out');
+        });
+      }
+
+      // Scan QR code
+      function scanQRCode(video) {
+        const canvas = document.createElement('canvas');
+        const context = canvas.getContext('2d');
+
+        function tick() {
+          if (video.readyState === video.HAVE_ENOUGH_DATA) {
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+            const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+            const code = jsQR(imageData.data, imageData.width, imageData.height, {
+              inversionAttempts: "dontInvert",
+            });
+
+            if (code) {
+              const patientId = code.data;
+              getPatient(patientId)
+                .then(patient => {
+                  currentPatient = patient;
+                  showAttendanceForm(patient);
+
+                  // Keep scanning after showing form
+                  setTimeout(() => {
+                    document.getElementById('scanResult').textContent = 'Scanning...';
+                    tick();
+                  }, 3000);
+                })
+                .catch(() => {
+                  document.getElementById('scanResult').textContent = 'Patient not found';
+                  setTimeout(() => {
+                    document.getElementById('scanResult').textContent = 'Scanning...';
+                    tick();
+                  }, 2000);
+                });
+            } else {
+              requestAnimationFrame(tick);
+            }
+          } else {
+            requestAnimationFrame(tick);
+          }
+        }
+
+        tick();
+      }
+
+      // Scan visitor QR code
+      function scanVisitorQRCode(video) {
+        const canvas = document.createElement('canvas');
+        const context = canvas.getContext('2d');
+
+        function tick() {
+          if (video.readyState === video.HAVE_ENOUGH_DATA) {
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+            const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+            const code = jsQR(imageData.data, imageData.width, imageData.height, {
+              inversionAttempts: "dontInvert",
+            });
+
+            if (code) {
+              const patientId = code.data;
+              getPatient(patientId)
+                .then(patient => {
+                  document.getElementById('visitorScanResult').textContent = `Patient Found: ${patient.Name}`;
+                  const visitorModal = bootstrap.Modal.getInstance(document.getElementById('visitorScannerModal'));
+                  visitorModal.hide();
+                  showVisitorPatientDetails(patient);
+                })
+                .catch(() => {
+                  document.getElementById('visitorScanResult').textContent = 'Patient not found';
+                  setTimeout(() => {
+                    document.getElementById('visitorScanResult').textContent = 'Scanning...';
+                    tick();
+                  }, 2000);
+                });
+            } else {
+              requestAnimationFrame(tick);
+            }
+          } else {
+            requestAnimationFrame(tick);
+          }
+        }
+
+        tick();
+      }
+
+      // Generate attendance calendar
+      function generateAttendanceCalendar(patientId, attendanceRecords) {
+        const calendar = document.getElementById('attendanceCalendar');
+        calendar.innerHTML = '';
+
+        const today = new Date();
+        const currentMonth = today.getMonth();
+        const currentYear = today.getFullYear();
+        const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+
+        // Add month header
+        const monthNames = ["January", "February", "March", "April", "May", "June",
+          "July", "August", "September", "October", "November", "December"
         ];
 
-        // DOM elements
-        const elements = {
-            patientForm: document.getElementById('patientForm'),
-            registerSection: document.getElementById('registerSection'),
-            showRegisterForm: document.getElementById('showRegisterForm'),
-            scannerOutput: document.getElementById('scanner-output'),
-            patientScannerOutput: document.getElementById('patient-scanner-output'),
-            startScanner: document.getElementById('startScanner'),
-            stopScanner: document.getElementById('stopScanner'),
-            startScannerPatient: document.getElementById('startScannerPatient'),
-            stopScannerPatient: document.getElementById('stopScannerPatient'),
-            idCardSection: document.getElementById('idCardSection'),
-            idCard: document.getElementById('idCard'),
-            downloadCard: document.getElementById('downloadCard'),
-            closeCard: document.getElementById('closeCard'),
-            loginButton: document.getElementById('loginButton'),
-            loginSection: document.getElementById('loginSection'),
-            patientQrSection: document.getElementById('patientQrSection'),
-            patientQrButton: document.getElementById('patientQrButton'),
-            staffDashboard: document.getElementById('staffDashboard'),
-            publicSection: document.getElementById('publicSection'),
-            editDetailsButton: document.getElementById('editDetailsButton'),
-            editPatientSection: document.getElementById('editPatientSection'),
-            editPatientForm: document.getElementById('editPatientForm'),
-            cancelEdit: document.getElementById('cancelEdit'),
-            attendanceForm: document.getElementById('attendanceForm'),
-            reviewForm: document.getElementById('reviewForm'),
-            testApi: document.getElementById('testApi')
-        };
+        // Add day headers
+        const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+        dayNames.forEach(day => {
+          const dayElement = document.createElement('div');
+          dayElement.className = 'calendar-day fw-bold';
+          dayElement.textContent = day;
+          calendar.appendChild(dayElement);
+        });
 
-        // QR Scanner instances
-        let html5QrCode = null; // Staff scanner
-        let patientQrCode = null; // Patient scanner
-
-        // XSS sanitization
-        function sanitize(input) {
-            if (typeof input !== 'string') return input;
-            const div = document.createElement('div');
-            div.textContent = input;
-            return div.innerHTML;
+        // Add empty days for start of month
+        const firstDay = new Date(currentYear, currentMonth, 1).getDay();
+        for (let i = 0; i < firstDay; i++) {
+          const emptyDay = document.createElement('div');
+          emptyDay.className = 'calendar-day';
+          calendar.appendChild(emptyDay);
         }
 
-        // Show toast notification
-        function showToast(message, isError = false) {
-            const toast = document.createElement('div');
-            toast.className = 'toast';
-            toast.style.backgroundColor = isError ? '#F44336' : '#4CAF50';
-            toast.textContent = message;
-            document.body.appendChild(toast);
-            setTimeout(() => toast.remove(), 3000);
+        // Add days of month
+        for (let day = 1; day <= daysInMonth; day++) {
+          const dateStr = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+          const attendance = attendanceRecords.find(ar =>
+            ar.PatientID === patientId && ar.Date === dateStr
+          );
+
+          const dayElement = document.createElement('div');
+          dayElement.className = 'calendar-day';
+          dayElement.textContent = day;
+
+          if (attendance) {
+            dayElement.classList.add('present');
+            dayElement.title = `Bed: ${attendance.BedType}`;
+          } else if (day < today.getDate() && currentMonth === today.getMonth()) {
+            dayElement.classList.add('absent');
+          }
+
+          calendar.appendChild(dayElement);
+        }
+      }
+
+      // Generate visitor attendance calendar
+      function generateVisitorAttendanceCalendar(patientId, attendanceRecords) {
+        const calendar = document.getElementById('visitorAttendanceCalendar');
+        calendar.innerHTML = '';
+
+        const today = new Date();
+        const currentMonth = today.getMonth();
+        const currentYear = today.getFullYear();
+        const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+
+        // Add day headers
+        const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+        dayNames.forEach(day => {
+          const dayElement = document.createElement('div');
+          dayElement.className = 'calendar-day fw-bold';
+          dayElement.textContent = day;
+          calendar.appendChild(dayElement);
+        });
+
+        // Add empty days for start of month
+        const firstDay = new Date(currentYear, currentMonth, 1).getDay();
+        for (let i = 0; i < firstDay; i++) {
+          const emptyDay = document.createElement('div');
+          emptyDay.className = 'calendar-day';
+          calendar.appendChild(emptyDay);
         }
 
-        // Clear form errors
-        function clearFormErrors(formId) {
-            const form = document.getElementById(formId);
-            if (!form) return;
-            form.querySelectorAll('.field-error').forEach(error => error.style.display = 'none');
-            form.querySelectorAll('input, select, textarea').forEach(input => input.classList.remove('border-red-500'));
-        }
+        // Add days of month
+        for (let day = 1; day <= daysInMonth; day++) {
+          const dateStr = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+          const attendance = attendanceRecords.find(ar =>
+            ar.PatientID === patientId && ar.Date === dateStr
+          );
 
-        // Show form error
-        function showFormError(inputId, errorId) {
-            const input = document.getElementById(inputId);
-            const error = document.getElementById(errorId);
-            if (input && error) {
-                error.style.display = 'block';
-                input.classList.add('border-red-500');
-            }
-        }
+          const dayElement = document.createElement('div');
+          dayElement.className = 'calendar-day';
+          dayElement.textContent = day;
 
-        // Generate ID Card
-        function generateIdCard(patient) {
-            console.log('Generating ID card for:', patient);
-            elements.idCard.innerHTML = `
-                <div class="company-info">
-                    <h2>GHLK Health Care Center</h2>
-                    <p>Rampur, Palpa, Nepal</p>
-                </div>
-                <div class="info-section">
-                    <div class="details">
-                        <div><b>Patient ID:</b> ${sanitize(patient.id)}</div>
-                        <div><b>Name:</b> ${sanitize(patient.name)}</div>
-                        <div><b>Age:</b> ${sanitize(patient.age.toString())}</div>
-                        <div><b>Address:</b> ${sanitize(patient.address)}</div>
-                        <div><b>Mobile No:</b> ${sanitize(patient.phone)}</div>
-                        <div><b>Join Date:</b> ${sanitize(patient.joiningDate)}</div>
-                    </div>
-                    <div class="qr-section">
-                        <img src="https://api.qrserver.com/v1/create-qr-code/?size=80x80&data=${encodeURIComponent(patient.id)}" alt="QR Code" width="80" height="80">
-                    </div>
-                </div>
+          if (attendance) {
+            dayElement.classList.add('present');
+            dayElement.title = `Bed: ${attendance.BedType}`;
+          } else if (day < today.getDate() && currentMonth === today.getMonth()) {
+            dayElement.classList.add('absent');
+          }
+
+          calendar.appendChild(dayElement);
+        }
+      }
+
+      // Load patient into edit form
+      function loadPatientIntoEditForm(patient) {
+        document.getElementById('edit-patientId').value = patient.ID;
+        document.getElementById('edit-name').value = patient.Name;
+        document.getElementById('edit-age').value = patient.Age;
+        document.getElementById('edit-address').value = patient.Address;
+        document.getElementById('edit-contact_number').value = patient.Phone;
+        document.getElementById('edit-gender').value = patient.Gender;
+        document.getElementById('edit-joining_date').value = patient.JoiningDate;
+        document.getElementById('edit-health_issues').value = patient.HealthIssues;
+        document.getElementById('edit-surgery').value = patient.Surgery;
+        document.getElementById('edit-paralysis_status').value = patient.ParalysisStatus;
+        document.getElementById('edit-other_details').value = patient.OtherDetails;
+
+        if (patient.PhotoUrl) {
+          document.getElementById('edit-photoPreview').src = patient.PhotoUrl;
+          document.getElementById('edit-photoPreview').style.display = 'block';
+        } else {
+          document.getElementById('edit-photoPreview').style.display = 'none';
+        }
+      }
+
+      // Get patient by ID
+      async function getPatient(patientId) {
+        try {
+          const result = await callAPI('getPatient', { patientId });
+          return result.data;
+        } catch (error) {
+          console.error('Failed to get patient:', error);
+          throw error;
+        }
+      }
+
+      // Update patients table
+      async function updatePatientsTable() {
+        try {
+          const result = await callAPI('getPatients');
+          patients = result.data;
+
+          const tableBody = document.getElementById('patientsTableBody');
+          tableBody.innerHTML = '';
+
+          patients.forEach(patient => {
+            const row = document.createElement('tr');
+            row.dataset.id = patient.ID;
+
+            row.innerHTML = `
+              <td>${patient.ID}</td>
+              <td>${patient.Name}</td>
+              <td>${patient.Age}</td>
+              <td>${patient.Gender}</td>
+              <td>${patient.Phone}</td>
+              <td>${patient.JoiningDate}</td>
+              <td>${patient.HealthIssues || 'N/A'}</td>
+              <td>
+                <button class="btn btn-sm btn-info view-patient" title="View">
+                  <i class="fas fa-eye"></i>
+                </button>
+              </td>
             `;
-            elements.idCardSection.classList.remove('hidden');
+
+            tableBody.appendChild(row);
+          });
+
+          // Add click handlers for view buttons
+          document.querySelectorAll('.view-patient').forEach(button => {
+            button.addEventListener('click', async function () {
+              const patientId = this.closest('tr').dataset.id;
+              try {
+                const patient = await getPatient(patientId);
+                updateIDCard(patient);
+                hideAllForms();
+                document.getElementById('idCardContainer').style.display = 'block';
+              } catch (error) {
+                showError('Failed to load patient details');
+              }
+            });
+          });
+        } catch (error) {
+          console.error('Failed to update patients table:', error);
+          showError('Failed to load patients');
+        }
+      }
+
+      // Update attendance table
+      async function updateAttendanceTable() {
+        try {
+          const result = await callAPI('getAllAttendance');
+          attendanceRecords = result.data;
+
+          const tableBody = document.getElementById('attendanceTableBody');
+          tableBody.innerHTML = '';
+
+          attendanceRecords.forEach(record => {
+            const row = document.createElement('tr');
+
+            row.innerHTML = `
+              <td>${record.PatientID}</td>
+              <td>${record.PatientName}</td>
+              <td>${record.Date}</td>
+              <td>${record.BedType}</td>
+              <td><span class="badge bg-success">${record.Status}</span></td>
+            `;
+
+            tableBody.appendChild(row);
+          });
+        } catch (error) {
+          console.error('Failed to update attendance table:', error);
+          showError('Failed to load attendance records');
+        }
+      }
+
+      // Update ID card
+      function updateIDCard(patient) {
+        document.getElementById('idCardName').textContent = patient.Name;
+        document.getElementById('idCardAge').textContent = patient.Age;
+        document.getElementById('idCardAddress').textContent = patient.Address;
+        document.getElementById('idCardMobile').textContent = patient.Phone;
+        document.getElementById('idCardJoiningDate').textContent = patient.JoiningDate;
+        document.getElementById('idCardPatientId').textContent = patient.ID;
+
+        // Update QR code with patient ID
+        document.getElementById('qrCode').src =
+          `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${patient.ID}`;
+
+        // Show photo in ID card if available
+        if (patient.PhotoUrl) {
+          document.getElementById('idCardPhoto').src = patient.PhotoUrl;
+          document.getElementById('idCardPhoto').style.display = 'block';
+        } else {
+          document.getElementById('idCardPhoto').style.display = 'none';
+        }
+      }
+
+      // Crop image to passport size
+      function cropToPassportSize(sourceCanvas) {
+        const passportRatio = 35 / 45;
+        const sourceRatio = sourceCanvas.width / sourceCanvas.height;
+
+        let sx, sy, sWidth, sHeight;
+
+        if (sourceRatio > passportRatio) {
+          // Source is wider than passport ratio
+          sWidth = sourceCanvas.height * passportRatio;
+          sHeight = sourceCanvas.height;
+          sx = (sourceCanvas.width - sWidth) / 2;
+          sy = 0;
+        } else {
+          // Source is taller than passport ratio
+          sWidth = sourceCanvas.width;
+          sHeight = sourceCanvas.width / passportRatio;
+          sx = 0;
+          sy = (sourceCanvas.height - sHeight) / 2;
         }
 
-        // Download ID Card
-        function initIdCardButtons(patient) {
-            elements.downloadCard.addEventListener('click', () => {
-                console.log('Downloading ID card for:', patient.id);
-                html2canvas(elements.idCard).then(canvas => {
-                    const link = document.createElement('a');
-                    link.href = canvas.toDataURL('image/png');
-                    link.download = `IDCard_${patient.id}.png`;
-                    link.click();
-                });
-            }, { once: true });
-            elements.closeCard.addEventListener('click', () => {
-                console.log('Closing ID card section');
-                elements.idCardSection.classList.add('hidden');
-                elements.registerSection.classList.add('hidden');
-                elements.showRegisterForm.parentElement.classList.remove('hidden');
-            }, { once: true });
+        // Create passport size canvas (35mm x 45mm at 10px/mm)
+        const passportCanvas = document.createElement('canvas');
+        passportCanvas.width = 350;
+        passportCanvas.height = 450;
+        passportCanvas.getContext('2d').drawImage(
+          sourceCanvas,
+          sx, sy, sWidth, sHeight,
+          0, 0, passportCanvas.width, passportCanvas.height
+        );
+
+        return passportCanvas.toDataURL('image/jpeg', 0.8);
+      }
+
+      // Download ID card
+      function downloadIDCard() {
+        html2canvas(document.getElementById('idCard'), {
+          scale: 2,
+          logging: false,
+          useCORS: true,
+          allowTaint: true
+        }).then(canvas => {
+          const link = document.createElement('a');
+          link.download = `GHLK_ID_${document.getElementById('idCardPatientId').textContent}.png`;
+          link.href = canvas.toDataURL('image/png');
+          link.click();
+        });
+      }
+
+      // Hide all form containers
+      function hideAllForms() {
+        document.querySelectorAll('.form-container').forEach(container => {
+          container.style.display = 'none';
+        });
+      }
+
+      // Hide specific form
+      function hideForm(formId) {
+        document.getElementById(formId).style.display = 'none';
+      }
+
+      // Call API
+      async function callAPI(action, data = {}) {
+        try {
+          const response = await fetch(CONFIG.API_URL, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              action: action,
+              data: data
+            })
+          });
+
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+
+          const result = await response.json();
+
+          if (result.status === 'error') {
+            throw new Error(result.message || 'Unknown error from server');
+          }
+
+          return result;
+        } catch (error) {
+          console.error('API Error:', error);
+          throw error;
         }
+      }
 
-        // API Request Helper
-        async function apiRequest(action, data) {
-            try {
-                console.log('API Request:', { action, data });
-                const response = await fetch(API_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ action, ...data })
-                });
-                console.log('Response status:', response.status, response.statusText);
-                const text = await response.text();
-                console.log('Raw response:', text);
-                let result;
-                try {
-                    result = JSON.parse(text);
-                } catch (err) {
-                    throw new Error('Invalid JSON response: ' + text);
-                }
-                if (result.status !== 'success') {
-                    throw new Error(result.message || 'API request failed');
-                }
-                return result;
-            } catch (err) {
-                console.error('API Error:', err.message, 'Action:', action);
-                showToast('Error: ' + err.message, true);
-                throw err;
-            }
-        }
+      // Show success message
+      function showSuccess(message) {
+        document.getElementById('successMessage').textContent = message;
+        const successToast = bootstrap.Toast.getInstance(document.getElementById('successToast'));
+        successToast.show();
+      }
 
-        // Stop Staff Scanner
-        function stopScanner() {
-            console.log('Stop QR scanner clicked');
-            if (html5QrCode) {
-                html5QrCode.stop().then(() => {
-                    html5QrCode.clear();
-                    html5QrCode = null;
-                    elements.startScanner.classList.remove('hidden');
-                    elements.stopScanner.classList.add('hidden');
-                    elements.scannerOutput.innerText = '';
-                    console.log('Scanner stopped.');
-                }).catch(err => console.error('Stop scanner failed:', err));
-            }
-        }
-
-        // Stop Patient Scanner
-        function stopPatientScanner() {
-            console.log('Stop patient QR scanner clicked');
-            if (patientQrCode) {
-                patientQrCode.stop().then(() => {
-                    patientQrCode.clear();
-                    patientQrCode = null;
-                    elements.startScannerPatient.classList.remove('hidden');
-                    elements.stopScannerPatient.classList.add('hidden');
-                    elements.patientScannerOutput.innerText = '';
-                    console.log('Patient scanner stopped.');
-                }).catch(err => console.error('Stop patient scanner failed:', err));
-            }
-        }
-
-        // Check Patient ID (used by both scanners)
-        async function checkPatientId(patientId, isStaff = false) {
-            console.log('Checking patient ID:', patientId, 'Is staff:', isStaff);
-            if (!patientId.match(/^GHLK\d{4}$/)) {
-                const outputElement = isStaff ? elements.scannerOutput : elements.patientScannerOutput;
-                outputElement.innerText = 'Invalid QR code format.';
-                return;
-            }
-            try {
-                const result = await apiRequest('getPatients');
-                const patient = result.data.find(p => p.id === patientId);
-                if (isStaff) {
-                    document.getElementById('noDetails').classList.add('hidden');
-                    document.getElementById('patientDetailsSection').classList.add('hidden');
-                    elements.editPatientSection.classList.add('hidden');
-                    elements.attendanceForm.classList.remove('hidden');
-                    if (patient) {
-                        document.getElementById('patientDetails').innerHTML = `
-                            <p><strong>ID:</strong> ${sanitize(patient.id)}</p>
-                            <p><strong>Name:</strong> ${sanitize(patient.name)}</p>
-                            <p><strong>Address:</strong> ${sanitize(patient.address)}</p>
-                            <p><strong>Age:</strong> ${sanitize(patient.age.toString())}</p>
-                            <p><strong>Phone:</strong> ${sanitize(patient.phone)}</p>
-                            <p><strong>Health Issues:</strong> ${sanitize(patient.healthIssues)}</p>
-                            <p><strong>Surgery History:</strong> ${sanitize(patient.surgery)}</p>
-                            <p><strong>Paralysis Status:</strong> ${sanitize(patient.paralysisStatus)}</p>
-                            <p><strong>Other Details:</strong> ${sanitize(patient.otherDetails)}</p>
-                            <p><strong>Joining Date:</strong> ${sanitize(patient.joiningDate)}</p>
-                            <p><strong>Health Status:</strong> ${sanitize(patient.healthStatus)}</p>
-                        `;
-                        document.getElementById('editId').value = patient.id;
-                        document.getElementById('editName').value = patient.name;
-                        document.getElementById('editAddress').value = patient.address;
-                        document.getElementById('editAge').value = patient.age;
-                        document.getElementById('editPhone').value = patient.phone;
-                        document.getElementById('editHealthIssues').value = patient.healthIssues;
-                        document.getElementById('editSurgery').value = patient.surgery;
-                        document.getElementById('editParalysisStatus').value = patient.paralysisStatus;
-                        document.getElementById('editOtherDetails').value = patient.otherDetails;
-                        document.getElementById('editJoiningDate').value = patient.joiningDate.split('/').reverse().join('-');
-                        const attendanceResult = await apiRequest('getAttendance');
-                        const patientRecords = attendanceResult.data.filter(r => r.patientId === patientId);
-                        const tbody = document.querySelector('#patientAttendanceTable tbody');
-                        tbody.innerHTML = '';
-                        patientRecords.forEach(r => {
-                            const row = `<tr>
-                                <td>${sanitize(r.date)}</td>
-                                <td>${sanitize(r.bedNumber || '-')}</td>
-                                <td>${sanitize(r.healthStatus)}</td>
-                            </tr>`;
-                            tbody.innerHTML += row;
-                        });
-                        document.getElementById('patientDetailsSection').classList.remove('hidden');
-                        document.getElementById('patientId').value = '';
-                    } else {
-                        document.getElementById('noDetails').classList.remove('hidden');
-                        elements.scannerOutput.innerText = 'No patient found for this ID.';
-                    }
-                } else {
-                    document.getElementById('patientInfo').classList.add('hidden');
-                    if (patient) {
-                        document.getElementById('patientInfoDetails').innerHTML = `
-                            <p><strong>ID:</strong> ${sanitize(patient.id)}</p>
-                            <p><strong>Name:</strong> ${sanitize(patient.name)}</p>
-                            <p><strong>Joining Date:</strong> ${sanitize(patient.joiningDate)}</p>
-                        `;
-                        document.getElementById('patientInfo').classList.remove('hidden');
-                    } else {
-                        elements.patientScannerOutput.innerText = 'No patient found for this ID.';
-                    }
-                }
-            } catch (err) {
-                console.error('Check patient ID error:', err);
-                const outputElement = isStaff ? elements.scannerOutput : elements.patientScannerOutput;
-                outputElement.innerText = 'Error fetching patient data.';
-                showToast('Failed to fetch patient data: ' + err.message, true);
-            }
-        }
-
-        // Staff QR Scanner
-        elements.startScanner.addEventListener('click', function() {
-            console.log('Start QR scanner clicked');
-            if (html5QrCode) return;
-            if (window.location.hostname !== 'localhost') {
-                showToast('QR scanning requires localhost or HTTPS. Please run on http://localhost:5500.', true);
-                return;
-            }
-            html5QrCode = new Html5Qrcode('qrVideo');
-            const qrCodeSuccessCallback = (decodedText) => {
-                console.log('QR code scanned:', decodedText);
-                let patientId = decodedText.match(/^GHLK\d{4}$/) ? decodedText : decodedText.split('/').pop();
-                elements.scannerOutput.innerText = `Successfully scanned: ${patientId}`;
-                stopScanner();
-                document.getElementById('patientId').value = patientId;
-                checkPatientId(patientId, true);
-            };
-            const qrCodeErrorCallback = () => {
-                elements.scannerOutput.innerText = '';
-            };
-            const config = { fps: 10, qrbox: { width: 250, height: 250 } };
-            html5QrCode.start({ facingMode: 'environment' }, config, qrCodeSuccessCallback, qrCodeErrorCallback)
-                .then(() => {
-                    elements.startScanner.classList.add('hidden');
-                    elements.stopScanner.classList.remove('hidden');
-                    elements.scannerOutput.innerText = 'Scanning...';
-                })
-                .catch(err => {
-                    console.error('Scanner Start Failed:', err);
-                    showToast('Camera access denied. Please allow camera access.', true);
-                    elements.scannerOutput.innerText = '';
-                    html5QrCode = null;
-                });
-        });
-
-        elements.stopScanner.addEventListener('click', stopScanner);
-
-        // Patient QR Scanner
-        elements.startScannerPatient.addEventListener('click', function() {
-            console.log('Start patient QR scanner clicked');
-            if (patientQrCode) return;
-            if (window.location.hostname !== 'localhost') {
-                showToast('QR scanning requires localhost or HTTPS. Please run on http://localhost:5500.', true);
-                return;
-            }
-            patientQrCode = new Html5Qrcode('patientQrVideo');
-            const qrCodeSuccessCallback = (decodedText) => {
-                console.log('Patient QR code scanned:', decodedText);
-                let patientId = decodedText.match(/^GHLK\d{4}$/) ? decodedText : decodedText.split('/').pop();
-                elements.patientScannerOutput.innerText = `Successfully scanned: ${patientId}`;
-                stopPatientScanner();
-                checkPatientId(patientId, false);
-            };
-            const qrCodeErrorCallback = () => {
-                elements.patientScannerOutput.innerText = '';
-            };
-            const config = { fps: 10, qrbox: { width: 250, height: 250 } };
-            patientQrCode.start({ facingMode: 'environment' }, config, qrCodeSuccessCallback, qrCodeErrorCallback)
-                .then(() => {
-                    elements.startScannerPatient.classList.add('hidden');
-                    elements.stopScannerPatient.classList.remove('hidden');
-                    elements.patientScannerOutput.innerText = 'Scanning...';
-                })
-                .catch(err => {
-                    console.error('Patient Scanner Start Failed:', err);
-                    showToast('Camera access denied. Please allow camera access.', true);
-                    elements.patientScannerOutput.innerText = '';
-                    patientQrCode = null;
-                });
-        });
-
-        elements.stopScannerPatient.addEventListener('click', stopPatientScanner);
-
-        // Toggle Login Section
-        elements.loginButton.addEventListener('click', () => {
-            console.log('Login button clicked');
-            elements.loginSection.classList.remove('hidden');
-            elements.patientQrSection.classList.add('hidden');
-            elements.staffDashboard.classList.add('hidden');
-            elements.publicSection.classList.remove('hidden');
-        });
-
-        // Toggle Patient QR Section
-        elements.patientQrButton.addEventListener('click', () => {
-            console.log('Patient QR button clicked');
-            elements.patientQrSection.classList.remove('hidden');
-            elements.loginSection.classList.add('hidden');
-            elements.staffDashboard.classList.add('hidden');
-            elements.publicSection.classList.remove('hidden');
-            stopPatientScanner();
-        });
-
-        // Login Handling
-        document.getElementById('loginForm').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            const username = sanitize(document.getElementById('username').value.trim());
-            const password = document.getElementById('password').value.trim();
-            console.log('Login attempt:', { username });
-            const isValid = staffCredentials.some(cred => cred.username === username && cred.passwordHash === password);
-            if (isValid) {
-                try {
-                    console.log('Toggling to staff dashboard');
-                    elements.loginSection.classList.add('hidden');
-                    elements.patientQrSection.classList.add('hidden');
-                    elements.staffDashboard.classList.remove('hidden');
-                    elements.publicSection.classList.add('hidden');
-                    await Promise.all([
-                        loadPatients(),
-                        loadAttendance(),
-                        loadReviews(),
-                        loadChart()
-                    ]);
-                    console.log('Data loaded successfully');
-                    showToast('Logged in successfully!');
-                } catch (err) {
-                    console.error('Login process error:', err);
-                    showToast('Logged in, but failed to load data: ' + err.message, true);
-                    elements.staffDashboard.classList.remove('hidden');
-                    elements.publicSection.classList.add('hidden');
-                }
-            } else {
-                document.getElementById('loginError').classList.remove('hidden');
-                console.log('Invalid credentials');
-            }
-        });
-
-        // Logout Handling
-        document.getElementById('logoutButton').addEventListener('click', function() {
-            console.log('Logout button clicked');
-            elements.staffDashboard.classList.add('hidden');
-            elements.loginSection.classList.add('hidden');
-            elements.patientQrSection.classList.add('hidden');
-            elements.publicSection.classList.remove('hidden');
-            document.getElementById('loginForm').reset();
-            document.getElementById('loginError').classList.add('hidden');
-        });
-
-        // Show Registration Form
-        elements.showRegisterForm.addEventListener('click', function() {
-            console.log('Show register form clicked');
-            elements.registerSection.classList.remove('hidden');
-            elements.idCardSection.classList.add('hidden');
-            this.parentElement.classList.add('hidden');
-            clearFormErrors('patientForm');
-        });
-
-        // Patient Registration
-        elements.patientForm.addEventListener('submit', async function(e) {
-            e.preventDefault();
-            clearFormErrors('patientForm');
-
-            try {
-                const name = sanitize(document.getElementById('name').value.trim());
-                const address = sanitize(document.getElementById('address').value.trim());
-                const age = parseInt(document.getElementById('age').value);
-                const phone = sanitize(document.getElementById('phone').value.trim());
-                const healthIssues = sanitize(document.getElementById('healthIssues').value.trim());
-                const surgery = sanitize(document.getElementById('surgery').value.trim());
-                const paralysisStatus = document.getElementById('paralysisStatus').value;
-                const otherDetails = sanitize(document.getElementById('otherDetails').value.trim());
-                const joiningDate = document.getElementById('joiningDate').value || new Date().toISOString().split('T')[0];
-
-                let valid = true;
-                if (!name.match(/^[A-Za-z\s]+$/)) {
-                    showFormError('name', 'nameError');
-                    valid = false;
-                }
-                if (!address) {
-                    showFormError('address', 'addressError');
-                    valid = false;
-                }
-                if (isNaN(age) || age < 0 || age > 120) {
-                    showFormError('age', 'ageError');
-                    valid = false;
-                }
-                if (!phone.match(/^[0-9\s\-\+\(\)]+$/)) {
-                    showFormError('phone', 'phoneError');
-                    valid = false;
-                }
-                if (!healthIssues) {
-                    showFormError('healthIssues', 'healthIssuesError');
-                    valid = false;
-                }
-                if (!paralysisStatus) {
-                    showFormError('paralysisStatus', 'paralysisStatusError');
-                    valid = false;
-                }
-                if (!joiningDate || new Date(joiningDate) > new Date()) {
-                    showFormError('joiningDate', 'joiningDateError');
-                    valid = false;
-                }
-
-                if (!valid) {
-                    showToast('Please correct the highlighted fields.', true);
-                    return;
-                }
-
-                const patient = {
-                    name,
-                    address,
-                    age,
-                    phone,
-                    healthIssues,
-                    surgery: surgery || 'None',
-                    paralysisStatus,
-                    otherDetails: otherDetails || 'None',
-                    joiningDate
-                };
-                console.log('Submitting patient:', patient);
-                const result = await apiRequest('addPatient', patient);
-                patient.id = result.id;
-                patient.healthStatus = 'Stable';
-
-                await loadPatients();
-                this.reset();
-                showToast(`Patient ${patient.id} registered successfully!`);
-                generateIdCard(patient);
-                initIdCardButtons(patient);
-            } catch (err) {
-                console.error('Registration error:', err);
-                showToast('Registration failed: ' + err.message, true);
-            }
-        });
-
-        // Edit Patient Details
-        elements.editDetailsButton.addEventListener('click', function() {
-            console.log('Edit details button clicked');
-            elements.editPatientSection.classList.remove('hidden');
-            elements.attendanceForm.classList.add('hidden');
-        });
-
-        elements.cancelEdit.addEventListener('click', function() {
-            console.log('Cancel edit clicked');
-            elements.editPatientSection.classList.add('hidden');
-            elements.attendanceForm.classList.remove('hidden');
-            clearFormErrors('editPatientForm');
-        });
-
-        elements.editPatientForm.addEventListener('submit', async function(e) {
-            e.preventDefault();
-            clearFormErrors('editPatientForm');
-
-            try {
-                const id = sanitize(document.getElementById('editId').value.trim());
-                const name = sanitize(document.getElementById('editName').value.trim());
-                const address = sanitize(document.getElementById('editAddress').value.trim());
-                const age = parseInt(document.getElementById('editAge').value);
-                const phone = sanitize(document.getElementById('editPhone').value.trim());
-                const healthIssues = sanitize(document.getElementById('editHealthIssues').value.trim());
-                const surgery = sanitize(document.getElementById('editSurgery').value.trim());
-                const paralysisStatus = document.getElementById('editParalysisStatus').value;
-                const otherDetails = sanitize(document.getElementById('editOtherDetails').value.trim());
-                const joiningDate = document.getElementById('editJoiningDate').value;
-                const healthStatus = document.getElementById('healthStatus').value;
-
-                let valid = true;
-                if (!name.match(/^[A-Za-z\s]+$/)) {
-                    showFormError('editName', 'editNameError');
-                    valid = false;
-                }
-                if (!address) {
-                    showFormError('editAddress', 'editAddressError');
-                    valid = false;
-                }
-                if (isNaN(age) || age < 0 || age > 120) {
-                    showFormError('editAge', 'editAgeError');
-                    valid = false;
-                }
-                if (!phone.match(/^[0-9\s\-\+\(\)]+$/)) {
-                    showFormError('editPhone', 'editPhoneError');
-                    valid = false;
-                }
-                if (!healthIssues) {
-                    showFormError('editHealthIssues', 'editHealthIssuesError');
-                    valid = false;
-                }
-                if (!paralysisStatus) {
-                    showFormError('editParalysisStatus', 'editParalysisStatusError');
-                    valid = false;
-                }
-                if (!joiningDate || new Date(joiningDate) > new Date()) {
-                    showFormError('editJoiningDate', 'editJoiningDateError');
-                    valid = false;
-                }
-
-                if (!valid) {
-                    showToast('Please correct the highlighted fields.', true);
-                    return;
-                }
-
-                const patient = {
-                    id,
-                    name,
-                    address,
-                    age,
-                    phone,
-                    healthIssues,
-                    surgery: surgery || 'None',
-                    paralysisStatus,
-                    otherDetails: otherDetails || 'None',
-                    joiningDate,
-                    healthStatus
-                };
-                console.log('Submitting edited patient:', patient);
-                await apiRequest('editPatient', patient);
-                await loadPatients();
-                elements.editPatientSection.classList.add('hidden');
-                elements.attendanceForm.classList.remove('hidden');
-                showToast(`Patient ${id} updated successfully!`);
-                await checkPatientId(id, true);
-            } catch (err) {
-                console.error('Update error:', err);
-                showToast('Update failed: ' + err.message, true);
-            }
-        });
-
-        // Check Patient ID (Manual)
-        document.getElementById('checkId').addEventListener('click', async function() {
-            console.log('Check ID button clicked');
-            const patientId = sanitize(document.getElementById('patientId').value.trim());
-            clearFormErrors('patientId');
-            if (!patientId.match(/^GHLK\d{4}$/)) {
-                showFormError('patientId', 'patientIdError');
-                showToast('Invalid Patient ID format (e.g., GHLK0001).', true);
-                return;
-            }
-            await checkPatientId(patientId, true);
-        });
-
-        // Attendance & Bed Management
-        elements.attendanceForm.addEventListener('submit', async function(e) {
-            e.preventDefault();
-            console.log('Attendance form submitted');
-            const patientId = sanitize(document.getElementById('patientId').value.trim());
-            if (!patientId.match(/^GHLK\d{4}$/)) {
-                showToast('Invalid Patient ID format (e.g., GHLK0001).', true);
-                return;
-            }
-            const bedNumber = document.getElementById('bedNumber').value || null;
-            const healthStatus = document.getElementById('healthStatus').value;
-            try {
-                await apiRequest('addAttendance', { patientId, bedNumber, healthStatus });
-                await Promise.all([loadPatients(), loadAttendance(), loadChart()]);
-                await checkPatientId(patientId, true);
-                this.reset();
-                showToast('Attendance marked successfully!');
-            } catch (err) {
-                console.error('Attendance error:', err);
-                showToast('Failed to mark attendance: ' + err.message, true);
-            }
-        });
-
-        // Review Submission
-        elements.reviewForm.addEventListener('submit', async function(e) {
-            e.preventDefault();
-            clearFormErrors('reviewForm');
-            const name = sanitize(document.getElementById('reviewName').value.trim());
-            const text = sanitize(document.getElementById('reviewText').value.trim());
-            let valid = true;
-            if (!name.match(/^[A-Za-z\s\.\-]+$/)) {
-                showFormError('reviewName', 'reviewNameError');
-                valid = false;
-            }
-            if (!text) {
-                showFormError('reviewText', 'reviewTextError');
-                valid = false;
-            }
-            if (!valid) {
-                showToast('Please correct the highlighted fields.', true);
-                return;
-            }
-            try {
-                console.log('Submitting review:', { name, text });
-                await apiRequest('addReview', { name, text });
-                await loadReviews();
-                this.reset();
-                showToast('Review submitted successfully!');
-            } catch (err) {
-                console.error('Review submission error:', err);
-                showToast('Review submission failed: ' + err.message, true);
-            }
-        });
-
-        // Load Patients
-        async function loadPatients() {
-            try {
-                console.log('Loading patients');
-                const result = await apiRequest('getPatients');
-                const tbody = document.querySelector('#patientTable tbody');
-                tbody.innerHTML = '';
-                result.data.forEach(p => {
-                    const row = `<tr>
-                        <td>${sanitize(p.id)}</td>
-                        <td>${sanitize(p.name)}</td>
-                        <td>${sanitize(p.address)}</td>
-                        <td>${sanitize(p.age.toString())}</td>
-                        <td>${sanitize(p.phone)}</td>
-                        <td>${sanitize(p.healthIssues)}</td>
-                        <td>${sanitize(p.paralysisStatus)}</td>
-                        <td>${sanitize(p.surgery)}</td>
-                        <td>${sanitize(p.otherDetails)}</td>
-                        <td>${sanitize(p.joiningDate)}</td>
-                        <td>${sanitize(p.healthStatus)}</td>
-                    </tr>`;
-                    tbody.innerHTML += row;
-                });
-                console.log('Patients loaded');
-            } catch (err) {
-                console.error('Load patients error:', err);
-                showToast('Failed to load patients: ' + err.message, true);
-            }
-        }
-
-        // Load Attendance
-        async function loadAttendance() {
-            try {
-                console.log('Loading attendance');
-                const result = await apiRequest('getAttendance');
-                const tbody = document.querySelector('#attendanceTable tbody');
-                tbody.innerHTML = '';
-                result.data.forEach(r => {
-                    const row = `<tr>
-                        <td>${sanitize(r.date)}</td>
-                        <td>${sanitize(r.patientId)}</td>
-                        <td>${sanitize(r.name)}</td>
-                        <td>${sanitize(r.bedNumber || '-')}</td>
-                        <td>${sanitize(r.healthStatus)}</td>
-                    </tr>`;
-                    tbody.innerHTML += row;
-                });
-                console.log('Attendance loaded');
-            } catch (err) {
-                console.error('Load attendance error:', err);
-                showToast('Failed to load attendance: ' + err.message, true);
-            }
-        }
-
-        // Load Reviews
-        async function loadReviews() {
-            try {
-                console.log('Loading reviews');
-                const result = await apiRequest('getReviews');
-                const reviewList = document.getElementById('reviewList');
-                reviewList.innerHTML = '';
-                result.data.forEach(r => {
-                    const div = document.createElement('div');
-                    div.className = 'bg-gray-100 p-4 rounded-md';
-                    div.innerHTML = `
-                        <p class="font-semibold">${sanitize(r.name)}</p>
-                        <p class="text-gray-600">${sanitize(r.text)}</p>
-                        <p class="text-sm text-gray-500">${sanitize(r.date)}</p>
-                    `;
-                    reviewList.appendChild(div);
-                });
-                console.log('Reviews loaded');
-            } catch (err) {
-                console.error('Load reviews error:', err);
-                showToast('Failed to load reviews: ' + err.message, true);
-            }
-        }
-
-        // Load Chart
-        let statusChart = null;
-        async function loadChart() {
-            try {
-                console.log('Loading chart');
-                const result = await apiRequest('getAttendance');
-                const statusCounts = { Stable: 0, Improving: 0, Critical: 0 };
-                result.data.forEach(r => statusCounts[r.healthStatus]++);
-                const ctx = document.getElementById('statusChart').getContext('2d');
-                if (statusChart) statusChart.destroy();
-                statusChart = new Chart(ctx, {
-                    type: 'bar',
-                    data: {
-                        labels: ['Stable', 'Improving', 'Critical'],
-                        datasets: [{
-                            label: 'Patient Status',
-                            data: [statusCounts.Stable, statusCounts.Improving, statusCounts.Critical],
-                            backgroundColor: ['#4CAF50', '#2196F3', '#F44336']
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        plugins: { legend: { display: false } },
-                        scales: { y: { beginAtZero: true, title: { display: true, text: 'Count' } } }
-                    }
-                });
-                console.log('Chart loaded');
-            } catch (err) {
-                console.error('Load chart error:', err);
-                showToast('Failed to load chart: ' + err.message, true);
-            }
-        }
-
-        // Test API Button
-        elements.testApi.addEventListener('click', async () => {
-            try {
-                console.log('Testing API...');
-                const result = await apiRequest('getReviews');
-                console.log('Test API result:', result);
-                showToast('API test successful!');
-            } catch (err) {
-                console.error('Test API error:', err);
-                showToast('API test failed: ' + err.message, true);
-            }
-        });
-
-        // Initialize App
-        async function initialize() {
-            console.log('Initializing app');
-            try {
-                await loadReviews();
-                console.log('Reviews loaded on startup');
-            } catch (err) {
-                console.error('Initialization error:', err);
-            }
-        }
-
-        initialize();
-    </script>
+      // Show error message
+      function showError(message) {
+        document.getElementById('errorMessage').textContent = message;
+        const errorToast = bootstrap.Toast.getInstance(document.getElementById('errorToast'));
+        errorToast.show();
+      }
+    });
+  </script>
 </body>
+
 </html>
